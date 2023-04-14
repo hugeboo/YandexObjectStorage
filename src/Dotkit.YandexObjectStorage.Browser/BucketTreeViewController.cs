@@ -12,8 +12,8 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly YClient _yClient;
         private readonly TreeView _treeView;
-        private readonly HashSet<TreeNode> _initializedNodes = new HashSet<TreeNode>();
-        private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new Dictionary<string, TreeNode>();
+        private readonly HashSet<TreeNode> _initializedNodes = new();
+        private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new();
 
         //private ContextMenuStrip _treeContextMenu;
         private ToolStripMenuItem? _createFolderToolStripMenuItem;
@@ -65,7 +65,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             _treeView.ContextMenuStrip = treeContextMenu;
         }
 
-        private void createFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        private void createFolderToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             using var dlg = new CreateFolderForm();
             if (dlg.ShowDialog() == DialogResult.OK)
@@ -98,13 +98,14 @@ namespace Dotkit.YandexObjectStorage.Browser
             }
         }
 
-        private void deleteFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        private void deleteFolderToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             var node = _treeView.SelectedNode;
+            if (node.Tag is not YFolderInfo fi) return;
+
             if (MessageBox.Show($"Do you really want to delete '{node.Text}' ?", "Delete Folder", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
                 == DialogResult.OK)
             {
-                var fi = node.Tag as YFolderInfo;
                 Utils.DoBackground(
                     () =>
                     {
@@ -121,7 +122,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             }
         }
 
-        private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+        private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             RefreshNode(_treeView.SelectedNode);
         }
@@ -158,7 +159,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                });
         }
 
-        private void treeContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             var selected = _treeView.SelectedNode?.Tag;
             _createFolderToolStripMenuItem!.Enabled = selected != null;
@@ -217,7 +218,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             return node;
         }
 
-        private void ShowMessageBox(Exception? ex)
+        private static void ShowMessageBox(Exception? ex)
         {
             MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }

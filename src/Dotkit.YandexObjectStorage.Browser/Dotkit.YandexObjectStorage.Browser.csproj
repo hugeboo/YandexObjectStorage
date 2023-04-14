@@ -8,6 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
+
   <ItemGroup>
     <ProjectReference Include="..\Dotkit.YandexObjectStorage.FileSystem\Dotkit.YandexObjectStorage.FileSystem.csproj" />
   </ItemGroup>
