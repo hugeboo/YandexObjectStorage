@@ -51,7 +51,7 @@
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Padding = new Padding(5, 2, 0, 2);
-            mainMenuStrip.Size = new Size(788, 24);
+            mainMenuStrip.Size = new Size(848, 24);
             mainMenuStrip.TabIndex = 0;
             mainMenuStrip.Text = "menuStrip1";
             // 
@@ -60,17 +60,17 @@
             mainToolStrip.ImageScalingSize = new Size(20, 20);
             mainToolStrip.Location = new Point(0, 24);
             mainToolStrip.Name = "mainToolStrip";
-            mainToolStrip.Size = new Size(788, 25);
+            mainToolStrip.Size = new Size(848, 25);
             mainToolStrip.TabIndex = 1;
             mainToolStrip.Text = "toolStrip1";
             // 
             // mainStatusStrip
             // 
             mainStatusStrip.ImageScalingSize = new Size(20, 20);
-            mainStatusStrip.Location = new Point(0, 410);
+            mainStatusStrip.Location = new Point(0, 439);
             mainStatusStrip.Name = "mainStatusStrip";
             mainStatusStrip.Padding = new Padding(1, 0, 12, 0);
-            mainStatusStrip.Size = new Size(788, 22);
+            mainStatusStrip.Size = new Size(848, 22);
             mainStatusStrip.TabIndex = 2;
             mainStatusStrip.Text = "statusStrip1";
             // 
@@ -88,7 +88,7 @@
             // mainSplitContainer.Panel2
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
-            mainSplitContainer.Size = new Size(788, 361);
+            mainSplitContainer.Size = new Size(848, 390);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
             mainSplitContainer.SplitterMoved += mainSplitContainer_SplitterMoved;
@@ -97,12 +97,13 @@
             // 
             mainTreeView.BorderStyle = BorderStyle.None;
             mainTreeView.Dock = DockStyle.Fill;
+            mainTreeView.HideSelection = false;
             mainTreeView.ImageIndex = 0;
             mainTreeView.ImageList = treeImageList;
             mainTreeView.Location = new Point(0, 0);
             mainTreeView.Name = "mainTreeView";
             mainTreeView.SelectedImageIndex = 0;
-            mainTreeView.Size = new Size(249, 361);
+            mainTreeView.Size = new Size(249, 390);
             mainTreeView.TabIndex = 0;
             // 
             // treeImageList
@@ -121,7 +122,7 @@
             mainListView.LargeImageList = listLargeImageList;
             mainListView.Location = new Point(0, 0);
             mainListView.Name = "mainListView";
-            mainListView.Size = new Size(535, 361);
+            mainListView.Size = new Size(595, 390);
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
             // 
@@ -136,7 +137,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(788, 432);
+            ClientSize = new Size(848, 461);
             Controls.Add(mainSplitContainer);
             Controls.Add(mainStatusStrip);
             Controls.Add(mainToolStrip);

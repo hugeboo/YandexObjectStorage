@@ -12,12 +12,26 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly YClient _yClient;
         private readonly ListView _listView;
- 
+
+        public event EventHandler<FolderEventArgs>? FolderDoubleClick;
+
         public ObjectListViewController(YClient yosClient, ListView listView)
         {
             _yClient = yosClient;
             _listView = listView;
+            listView.MouseDoubleClick += ListView_MouseDoubleClick;
+        }
 
+        private void ListView_MouseDoubleClick(object? sender, MouseEventArgs e)
+        {
+            var ht = _listView.HitTest(e.Location);
+            if (ht.Item != null)
+            {
+                if (ht.Item.Tag is YFolderInfo fi)
+                {
+                    FolderDoubleClick?.Invoke(this, new FolderEventArgs(fi));
+                }
+            }
         }
 
         public void Attach(BucketTreeViewController bucketTreeViewController)
@@ -32,7 +46,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             _listView.Items.Clear();
         }
 
-        private void BucketTreeViewController_FolderSelectedChanged(object? sender, FolderSelectedChangedEventArgs e)
+        private void BucketTreeViewController_FolderSelectedChanged(object? sender, FolderEventArgs e)
         {
             Utils.DoBackground(
                 () =>
@@ -51,7 +65,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                 });
         }
 
-        private void BucketTreeViewController_BucketSelectedChanged(object? sender, BucketSelectedChangedEventArgs e)
+        private void BucketTreeViewController_BucketSelectedChanged(object? sender, BucketEventArgs e)
         {
             Utils.DoBackground(
                 () =>
@@ -72,7 +86,9 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private ListViewItem CreateFolderItem(YFolderInfo folder)
         {
-            return new ListViewItem(folder.Name, "folder");
+            var item = new ListViewItem(folder.Name, "folder");
+            item.Tag = folder;
+            return item;
         }
 
         private void UpdateItems()

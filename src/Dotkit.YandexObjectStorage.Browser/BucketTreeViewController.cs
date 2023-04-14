@@ -13,10 +13,11 @@ namespace Dotkit.YandexObjectStorage.Browser
         private readonly YClient _yClient;
         private readonly TreeView _treeView;
         private readonly HashSet<TreeNode> _updatedNodes = new HashSet<TreeNode>();
+        private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new Dictionary<string, TreeNode>();
 
         public event EventHandler? EmptySelectedChanged;
-        public event EventHandler<BucketSelectedChangedEventArgs>? BucketSelectedChanged;
-        public event EventHandler<FolderSelectedChangedEventArgs>? FolderSelectedChanged;
+        public event EventHandler<BucketEventArgs>? BucketSelectedChanged;
+        public event EventHandler<FolderEventArgs>? FolderSelectedChanged;
 
         public BucketTreeViewController(YClient yosClient, TreeView treeView)
         {
@@ -30,6 +31,16 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         public void Attach(ObjectListViewController objectListViewController)
         {
+            objectListViewController.FolderDoubleClick += ObjectListViewController_FolderDoubleClick;
+        }
+
+        private void ObjectListViewController_FolderDoubleClick(object? sender, FolderEventArgs e)
+        {
+            if (_nodeByFolderKey.TryGetValue(e.Folder.Key, out TreeNode? node))
+            {
+                _treeView.SelectedNode = node;
+                node.Expand();
+            }
         }
 
         public void Init()
@@ -64,12 +75,15 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private TreeNode CreateFolderNode(YFolderInfo folder)
         {
-            return new TreeNode(folder.Name)
+            var node = new TreeNode(folder.Name)
             {
                 Tag = folder,
                 ImageKey = "folder",
                 SelectedImageKey = "folder"
             };
+            node.Nodes.Add(new TreeNode());
+            _nodeByFolderKey[folder.Key] = node;
+            return node;
         }
 
         private void ShowMessageBox(Exception? ex)
@@ -118,11 +132,11 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             if (e.Node.Tag is YBucketInfo bi)
             {
-                BucketSelectedChanged?.Invoke(this, new BucketSelectedChangedEventArgs(bi));
+                BucketSelectedChanged?.Invoke(this, new BucketEventArgs(bi));
             }
             else if (e.Node.Tag is YFolderInfo fi)
             {
-                FolderSelectedChanged?.Invoke(this, new FolderSelectedChangedEventArgs(fi));
+                FolderSelectedChanged?.Invoke(this, new FolderEventArgs(fi));
             }
             else
             {
@@ -158,19 +172,19 @@ namespace Dotkit.YandexObjectStorage.Browser
         }
     }
 
-    public sealed class BucketSelectedChangedEventArgs : EventArgs
+    public sealed class BucketEventArgs : EventArgs
     {
         public YBucketInfo Bucket { get; }
-        public BucketSelectedChangedEventArgs(YBucketInfo bucket)
+        public BucketEventArgs(YBucketInfo bucket)
         {
             Bucket = bucket;
         }
     }
 
-    public sealed class FolderSelectedChangedEventArgs : EventArgs
+    public sealed class FolderEventArgs : EventArgs
     {
         public YFolderInfo Folder { get; }
-        public FolderSelectedChangedEventArgs(YFolderInfo folder)
+        public FolderEventArgs(YFolderInfo folder)
         {
             Folder = folder;
         }
