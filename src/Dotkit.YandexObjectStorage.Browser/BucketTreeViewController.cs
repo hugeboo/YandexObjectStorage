@@ -15,7 +15,6 @@ namespace Dotkit.YandexObjectStorage.Browser
         private readonly HashSet<TreeNode> _initializedNodes = new();
         private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new();
 
-        //private ContextMenuStrip _treeContextMenu;
         private ToolStripMenuItem? _createFolderToolStripMenuItem;
         private ToolStripMenuItem? _deleteFolderToolStripMenuItem;
 
@@ -37,6 +36,27 @@ namespace Dotkit.YandexObjectStorage.Browser
         public void Attach(ObjectListViewController objectListViewController)
         {
             objectListViewController.FolderDoubleClick += ObjectListViewController_FolderDoubleClick;
+            objectListViewController.CreateNewFolder += ObjectListViewController_CreateNewFolder;
+            objectListViewController.DeleteFolder += ObjectListViewController_DeleteFolder;
+            objectListViewController.Refresh += ObjectListViewController_Refresh;
+        }
+
+        private void ObjectListViewController_Refresh(object? sender, EventArgs e)
+        {
+            RefreshNode(_treeView.SelectedNode);
+        }
+
+        private void ObjectListViewController_DeleteFolder(object? sender, FolderEventArgs e)
+        {
+            if(_nodeByFolderKey.TryGetValue(e.Folder.Key, out TreeNode? node))
+            {
+                DeleteFolder(node);
+            }
+        }
+
+        private void ObjectListViewController_CreateNewFolder(object? sender, EventArgs e)
+        {
+            createFolderToolStripMenuItem_Click(sender, e);
         }
 
         private void CreateContextMenu()
@@ -58,6 +78,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             {
                 _createFolderToolStripMenuItem,
                 _deleteFolderToolStripMenuItem,
+                new ToolStripSeparator(),
                 refreshToolStripMenuItem 
             });
             treeContextMenu.Opening += treeContextMenu_Opening;
@@ -100,7 +121,11 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void deleteFolderToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            var node = _treeView.SelectedNode;
+            DeleteFolder(_treeView.SelectedNode);
+        }
+
+        private void DeleteFolder(TreeNode node)
+        {
             if (node.Tag is not YFolderInfo fi) return;
 
             if (MessageBox.Show($"Do you really want to delete '{node.Text}' ?", "Delete Folder", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
@@ -152,6 +177,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                    var nodes = lstFolder.Select(CreateFolderNode).ToArray();
                    node.Nodes.AddRange(nodes);
                    node.Expand();
+                   FireSelectedChanged(node);
                },
                (ex) =>
                {
@@ -236,11 +262,16 @@ namespace Dotkit.YandexObjectStorage.Browser
                 RefreshNode(e.Node);
             }
 
-            if (e.Node.Tag is YBucketInfo bi)
+            FireSelectedChanged(e.Node);
+        }
+
+        private void FireSelectedChanged(TreeNode node)
+        {
+            if (node.Tag is YBucketInfo bi)
             {
                 BucketSelectedChanged?.Invoke(this, new BucketEventArgs(bi));
             }
-            else if (e.Node.Tag is YFolderInfo fi)
+            else if (node.Tag is YFolderInfo fi)
             {
                 FolderSelectedChanged?.Invoke(this, new FolderEventArgs(fi));
             }

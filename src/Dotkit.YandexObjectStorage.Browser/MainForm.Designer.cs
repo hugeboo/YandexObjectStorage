@@ -114,6 +114,7 @@
             treeImageList.Images.SetKeyName(0, "bucket");
             treeImageList.Images.SetKeyName(1, "folder");
             treeImageList.Images.SetKeyName(2, "open_folder");
+            treeImageList.Images.SetKeyName(3, "bucket_0");
             // 
             // mainListView
             // 

@@ -9,7 +9,7 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public sealed class YBucketInfo
     {
-        public string Name { get; private set; }
+        public string Name { get; private set; } = null!;
         public DateTime CreationDate { get; set; }
 
         private YBucketInfo() { }
