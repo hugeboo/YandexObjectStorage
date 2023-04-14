@@ -8,8 +8,8 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public sealed class YFolderInfo
     {
-        public string BucketName { get; private set; }
-        public string Key { get; private set; }
+        public string BucketName { get; private set; } = null!;
+        public string Key { get; private set; } = null!;
         public string FullPath => $"{BucketName}://{Key}";
         public string Folder => Path.GetDirectoryName(Key.TrimEndPathDelimeter()).NormalizePathDelimeter() ?? string.Empty;
         public string Name => Path.GetFileName(Key.TrimEndPathDelimeter()) ?? string.Empty;
