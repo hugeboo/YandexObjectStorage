@@ -12,17 +12,17 @@ namespace Dotkit.YandexObjectStorage.FileSystem
     {
         public static async Task CreateAsync(YClient client, string bucketName)
         {
-            await client.CreateBucketAsync(bucketName);
+            await client.CreateBucketAsync(bucketName).ConfigureAwait(false);
         }
 
         public static async Task DeleteAsync(YClient client, string bucketName)
         {
-            await client.DeleteBucketAsync(bucketName);
+            await client.DeleteBucketAsync(bucketName).ConfigureAwait(false);
         }
 
         public static async Task<List<YBucketInfo>> GetAllAsync(YClient client)
         {
-            return await client.GetBucketsAsync();
+            return await client.GetBucketsAsync().ConfigureAwait(false);
         }
     }
 }

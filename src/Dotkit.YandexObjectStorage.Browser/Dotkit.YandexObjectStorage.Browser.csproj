@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dotkit.YandexObjectStorage\Dotkit.YandexObjectStorage.csproj" />
+    <ProjectReference Include="..\Dotkit.YandexObjectStorage.FileSystem\Dotkit.YandexObjectStorage.FileSystem.csproj" />
   </ItemGroup>
 
 </Project>

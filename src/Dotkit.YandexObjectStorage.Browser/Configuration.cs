@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dotkit.YandexObjectStorage.FileSystem;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal class Configuration
     {
-        public YOSConfig YOSConfig { get; set; } = new YOSConfig();
+        public YConfig YConfig { get; set; } = new YConfig();
         public UIState UIState { get; set; } = new UIState();
     }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dotkit.YandexObjectStorage.FileSystem;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
@@ -9,45 +10,34 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class ObjectListViewController
     {
-        private readonly YOSClient _yosClient;
+        private readonly YClient _yClient;
         private readonly ListView _listView;
-        private BucketTreeViewController? _bucketTreeViewController;
-
-        public ObjectListViewController(YOSClient yosClient, ListView listView)
+ 
+        public ObjectListViewController(YClient yosClient, ListView listView)
         {
-            _yosClient = yosClient;
+            _yClient = yosClient;
             _listView = listView;
 
         }
 
         public void Attach(BucketTreeViewController bucketTreeViewController)
         {
-            _bucketTreeViewController = bucketTreeViewController;
-            _bucketTreeViewController.ItemSelectedChanged += bucketTreeViewController_ItemSelectedChanged;
+            bucketTreeViewController.BucketSelectedChanged += BucketTreeViewController_BucketSelectedChanged;
+            bucketTreeViewController.FolderSelectedChanged += BucketTreeViewController_FolderSelectedChanged;
+            bucketTreeViewController.EmptySelectedChanged += BucketTreeViewController_EmptySelectedChanged;
         }
 
-        private ListViewItem CreateFolderItem(YOSFolder folder)
+        private void BucketTreeViewController_EmptySelectedChanged(object? sender, EventArgs e)
         {
-            return new ListViewItem(folder.Name, "folder");
+            _listView.Items.Clear();
         }
 
-        private void bucketTreeViewController_ItemSelectedChanged(object? sender, ItemSelectedChangedEventArgs e)
+        private void BucketTreeViewController_FolderSelectedChanged(object? sender, FolderSelectedChangedEventArgs e)
         {
             Utils.DoBackground(
                 () =>
                 {
-                    if (e.IsBucket)
-                    {
-                        return _yosClient.GetFolders(e.Bucket!.Name).GetAwaiter().GetResult();
-                    }
-                    else if (e.IsFolder)
-                    {
-                        return _yosClient.GetFolders(e.Folder!).GetAwaiter().GetResult();
-                    }
-                    else
-                    {
-                        return new List<YOSFolder>();
-                    }
+                    return YFolder.GetAllAsync(_yClient, e.Folder!.BucketName, e.Folder!.Name).GetAwaiter().GetResult();
                 },
                 (lstFolder) =>
                 {
@@ -57,8 +47,41 @@ namespace Dotkit.YandexObjectStorage.Browser
                 },
                 (ex) =>
                 {
-                    MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBox(ex);
                 });
+        }
+
+        private void BucketTreeViewController_BucketSelectedChanged(object? sender, BucketSelectedChangedEventArgs e)
+        {
+            Utils.DoBackground(
+                () =>
+                {
+                    return YFolder.GetAllAsync(_yClient, e.Bucket!.Name).GetAwaiter().GetResult();
+                },
+                (lstFolder) =>
+                {
+                    _listView.Items.Clear();
+                    var items = lstFolder.Select(CreateFolderItem).ToArray();
+                    _listView.Items.AddRange(items);
+                },
+                (ex) =>
+                {
+                    ShowMessageBox(ex);
+                });
+        }
+
+        private ListViewItem CreateFolderItem(YFolderInfo folder)
+        {
+            return new ListViewItem(folder.Name, "folder");
+        }
+
+        private void UpdateItems()
+        {
+        }
+
+        private void ShowMessageBox(Exception? ex)
+        {
+            MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

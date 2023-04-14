@@ -141,6 +141,7 @@
             Controls.Add(mainStatusStrip);
             Controls.Add(mainToolStrip);
             Controls.Add(mainMenuStrip);
+            DoubleBuffered = true;
             MainMenuStrip = mainMenuStrip;
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;

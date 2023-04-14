@@ -11,7 +11,7 @@ namespace Dotkit.YandexObjectStorage.FileSystem
     {
         public static async Task<List<YObjectInfo>> GetAllAsync(YClient client, string bucketName, string? rootFolder = null)
         {
-            return await client.GetObjectsAsync(bucketName, rootFolder);
+            return await client.GetObjectsAsync(bucketName, rootFolder).ConfigureAwait(false);
         }
     }
 }

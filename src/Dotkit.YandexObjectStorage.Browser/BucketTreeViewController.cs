@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Dotkit.YandexObjectStorage.FileSystem;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,15 +10,17 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class BucketTreeViewController
     {
-        private readonly YOSClient _yosClient;
+        private readonly YClient _yClient;
         private readonly TreeView _treeView;
-        private ObjectListViewController? _objectListViewController;
+        private readonly HashSet<TreeNode> _updatedNodes = new HashSet<TreeNode>();
 
-        public event EventHandler<ItemSelectedChangedEventArgs>? ItemSelectedChanged;
+        public event EventHandler? EmptySelectedChanged;
+        public event EventHandler<BucketSelectedChangedEventArgs>? BucketSelectedChanged;
+        public event EventHandler<FolderSelectedChangedEventArgs>? FolderSelectedChanged;
 
-        public BucketTreeViewController(YOSClient yosClient, TreeView treeView)
+        public BucketTreeViewController(YClient yosClient, TreeView treeView)
         {
-            _yosClient = yosClient;
+            _yClient = yosClient;
             _treeView = treeView;
             _treeView.AfterSelect += treeView_AfterSelect;
             _treeView.MouseClick += treeView_MouseClick;
@@ -26,7 +30,6 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         public void Attach(ObjectListViewController objectListViewController)
         {
-            _objectListViewController = objectListViewController;
         }
 
         public void Init()
@@ -35,7 +38,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             Utils.DoBackground(
                 () => 
                 {
-                    return _yosClient.GetBuckets().GetAwaiter().GetResult();
+                    return YBucket.GetAllAsync(_yClient).GetAwaiter().GetResult();
                 }, 
                 (lstBucket) => 
                 {
@@ -45,11 +48,11 @@ namespace Dotkit.YandexObjectStorage.Browser
                 }, 
                 (ex) => 
                 {
-                    MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBox(ex);
                 });
         }
 
-        private TreeNode CreateBucketNode(YOSBucket bucket)
+        private TreeNode CreateBucketNode(YBucketInfo bucket)
         {
             return new TreeNode(bucket.Name)
             {
@@ -59,7 +62,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             };
         }
 
-        private TreeNode CreateFolderNode(YOSFolder folder)
+        private TreeNode CreateFolderNode(YFolderInfo folder)
         {
             return new TreeNode(folder.Name)
             {
@@ -69,48 +72,62 @@ namespace Dotkit.YandexObjectStorage.Browser
             };
         }
 
+        private void ShowMessageBox(Exception? ex)
+        {
+            MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
         private void treeView_AfterSelect(object? sender, TreeViewEventArgs e)
         {
             if (e.Node == null)
             {
-                ItemSelectedChanged?.Invoke(this, new ItemSelectedChangedEventArgs());
+                EmptySelectedChanged?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
-            var eventArgs = new ItemSelectedChangedEventArgs
+            if (_updatedNodes.Add(e.Node))
             {
-                Bucket = e.Node.Tag as YOSBucket,
-                Folder = e.Node.Tag as YOSFolder
-            };
+                Utils.DoBackground(
+                    () =>
+                    {
+                        if (e.Node.Tag is YBucketInfo bi)
+                        {
+                            return YFolder.GetAllAsync(_yClient, bi.Name).GetAwaiter().GetResult();
+                        }
+                        else if (e.Node.Tag is YFolderInfo fi)
+                        {
+                            return YFolder.GetAllAsync(_yClient, fi.BucketName, fi.Name).GetAwaiter().GetResult();
+                        }
+                        else
+                        {
+                            return new List<YFolderInfo>();
+                        }
+                    },
+                    (lstFolder) =>
+                    {
+                        e.Node.Nodes.Clear();
+                        var nodes = lstFolder.Select(CreateFolderNode).ToArray();
+                        e.Node.Nodes.AddRange(nodes);
+                        e.Node.Expand();
+                    },
+                    (ex) =>
+                    {
+                        ShowMessageBox(ex);
+                    });
+            }
 
-            Utils.DoBackground(
-                () =>
-                {
-                    if (eventArgs.IsBucket)
-                    {
-                        return _yosClient.GetFolders(eventArgs.Bucket!.Name).GetAwaiter().GetResult();
-                    }
-                    else if (eventArgs.IsFolder)
-                    {
-                        return _yosClient.GetFolders(eventArgs.Folder!).GetAwaiter().GetResult();
-                    }
-                    else
-                    {
-                        return new List<YOSFolder>();
-                    }
-                },
-                (lstFolder) =>
-                {
-                    e.Node.Nodes.Clear();
-                    var nodes = lstFolder.Select(CreateFolderNode).ToArray();
-                    e.Node.Nodes.AddRange(nodes);
-                },
-                (ex) =>
-                {
-                    MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                });
-
-            ItemSelectedChanged?.Invoke(this, eventArgs);
+            if (e.Node.Tag is YBucketInfo bi)
+            {
+                BucketSelectedChanged?.Invoke(this, new BucketSelectedChangedEventArgs(bi));
+            }
+            else if (e.Node.Tag is YFolderInfo fi)
+            {
+                FolderSelectedChanged?.Invoke(this, new FolderSelectedChangedEventArgs(fi));
+            }
+            else
+            {
+                EmptySelectedChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         private void treeView_MouseClick(object? sender, MouseEventArgs e)
@@ -124,7 +141,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeView_BeforeCollapse(object? sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node?.Tag is YOSFolder)
+            if (e.Node?.Tag is YFolderInfo)
             {
                 e.Node.ImageKey = "folder";
                 e.Node.SelectedImageKey = "folder";
@@ -133,7 +150,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeView_BeforeExpand(object? sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node?.Tag is YOSFolder)
+            if (e.Node?.Tag is YFolderInfo)
             {
                 e.Node.ImageKey = "open_folder";
                 e.Node.SelectedImageKey = "open_folder";
@@ -141,13 +158,21 @@ namespace Dotkit.YandexObjectStorage.Browser
         }
     }
 
-    public sealed class ItemSelectedChangedEventArgs : EventArgs
+    public sealed class BucketSelectedChangedEventArgs : EventArgs
     {
-        public bool IsEmpty => !IsBucket && !IsFolder;
-        public bool IsBucket => Bucket != null;
-        public bool IsFolder => Folder != null;
+        public YBucketInfo Bucket { get; }
+        public BucketSelectedChangedEventArgs(YBucketInfo bucket)
+        {
+            Bucket = bucket;
+        }
+    }
 
-        public YOSBucket? Bucket { get; set; }
-        public YOSFolder? Folder { get; set; }
+    public sealed class FolderSelectedChangedEventArgs : EventArgs
+    {
+        public YFolderInfo Folder { get; }
+        public FolderSelectedChangedEventArgs(YFolderInfo folder)
+        {
+            Folder = folder;
+        }
     }
 }
