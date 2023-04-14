@@ -10,40 +10,19 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public static class YBucket
     {
-        public static async Task Create(YClient client, string bucketName)
+        public static async Task CreateAsync(YClient client, string bucketName)
         {
-            try
-            {
-                await client.CreateBucketAsync(bucketName);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex, $"Bucket={bucketName}");
-            }
+            await client.CreateBucketAsync(bucketName);
         }
 
-        public static async Task Delete(YClient client, string bucketName)
+        public static async Task DeleteAsync(YClient client, string bucketName)
         {
-            try
-            {
-                await client.DeleteBucketAsync(bucketName);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex, $"Bucket={bucketName}");
-            }
+            await client.DeleteBucketAsync(bucketName);
         }
 
-        public static async Task<IEnumerable<YBucketInfo>> GetBuckets(YClient client)
+        public static async Task<List<YBucketInfo>> GetAllAsync(YClient client)
         {
-            try
-            {
-                return await client.GetBucketsAsync();
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex);
-            }
+            return await client.GetBucketsAsync();
         }
     }
 }

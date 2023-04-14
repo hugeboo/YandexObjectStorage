@@ -9,8 +9,10 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public sealed class YBucketInfo
     {
-        public string? Name { get; set; }
+        public string Name { get; private set; }
         public DateTime CreationDate { get; set; }
+
+        private YBucketInfo() { }
 
         public override string ToString()
         {

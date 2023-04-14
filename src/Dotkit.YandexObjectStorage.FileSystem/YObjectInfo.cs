@@ -9,8 +9,8 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public sealed class YObjectInfo
     {
-        public string? BucketName { get; set; }
-        public string? Key { get; set; }
+        public string BucketName { get; private set; }
+        public string Key { get; private set; }
         public string FullPath => $"{BucketName}://{Key}";
         public bool IsFolder => Key?.EndsWith(YClient.PATH_DELIMETER) ?? false;
         public string Folder => Path.GetDirectoryName(Key.TrimEndPathDelimeter()).NormalizePathDelimeter() ?? string.Empty;
@@ -21,6 +21,8 @@ namespace Dotkit.YandexObjectStorage.FileSystem
         public string? OwnerId { get; set; }
         public long Size { get; set; }
         public string? StorageClass { get; set; }
+
+        private YObjectInfo() { }
 
         public override string ToString()
         {

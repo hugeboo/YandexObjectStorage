@@ -9,16 +9,9 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public static class YObject
     {
-        public static async Task<IEnumerable<YObjectInfo>> GetObjects(YClient client, string bucketName, string? rootFolder = null)
+        public static async Task<List<YObjectInfo>> GetAllAsync(YClient client, string bucketName, string? rootFolder = null)
         {
-            try
-            {
-                return await client.GetObjectsAsync(bucketName, rootFolder);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex);
-            }
+            return await client.GetObjectsAsync(bucketName, rootFolder);
         }
     }
 }

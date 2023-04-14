@@ -10,40 +10,19 @@ namespace Dotkit.YandexObjectStorage.FileSystem
 {
     public static class YFolder
     {
-        public static async Task<IEnumerable<YFolderInfo>> GetFolders(YClient client, string bucketName, string? rootFolder = null)
+        public static async Task<List<YFolderInfo>> GetAllAsync(YClient client, string bucketName, string? baseFolder = null)
         {
-            try
-            {
-                return await client.GetFoldersAsync(bucketName, rootFolder);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex, $"Bucket={bucketName} RootFolder={rootFolder}");
-            }
+            return await client.GetFoldersAsync(bucketName, baseFolder);
         }
 
-        public static async Task Create(YClient client, string bucketName, string name, string? rootFolder = null)
+        public static async Task CreateAsync(YClient client, string bucketName, string name, string? baseFolder = null)
         {
-            try
-            {
-                await client.CreateFolderAsync(bucketName, name, rootFolder);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex, $"Bucket={bucketName} Name={name} RootFolder={rootFolder}");
-            }
+            await client.CreateFolderAsync(bucketName, name, baseFolder);
         }
 
-        public static async Task Delete(YClient client, YFolderInfo folderInfo)
+        public static async Task DeleteAsync(YClient client, YFolderInfo folderInfo)
         {
-            try
-            {
-                await client.DeleteFolderAsync(folderInfo);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                throw new YException(ex, $"Bucket={folderInfo.BucketName} Key={folderInfo.Key}");
-            }
+            await client.DeleteFolderAsync(folderInfo);
         }
     }
 }
