@@ -12,8 +12,12 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly YClient _yClient;
         private readonly TreeView _treeView;
-        private readonly HashSet<TreeNode> _updatedNodes = new HashSet<TreeNode>();
+        private readonly HashSet<TreeNode> _initializedNodes = new HashSet<TreeNode>();
         private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new Dictionary<string, TreeNode>();
+
+        //private ContextMenuStrip _treeContextMenu;
+        private ToolStripMenuItem? _createFolderToolStripMenuItem;
+        private ToolStripMenuItem? _deleteFolderToolStripMenuItem;
 
         public event EventHandler? EmptySelectedChanged;
         public event EventHandler<BucketEventArgs>? BucketSelectedChanged;
@@ -27,11 +31,138 @@ namespace Dotkit.YandexObjectStorage.Browser
             _treeView.MouseClick += treeView_MouseClick;
             _treeView.BeforeExpand += treeView_BeforeExpand;
             _treeView.BeforeCollapse += treeView_BeforeCollapse;
+            CreateContextMenu();
         }
 
         public void Attach(ObjectListViewController objectListViewController)
         {
             objectListViewController.FolderDoubleClick += ObjectListViewController_FolderDoubleClick;
+        }
+
+        private void CreateContextMenu()
+        {
+            _createFolderToolStripMenuItem = new ToolStripMenuItem();
+            _createFolderToolStripMenuItem.Text = "Create folder...";
+            _createFolderToolStripMenuItem.Click += createFolderToolStripMenuItem_Click;
+
+            _deleteFolderToolStripMenuItem = new ToolStripMenuItem();
+            _deleteFolderToolStripMenuItem.Text = "Delete folder";
+            _deleteFolderToolStripMenuItem.Click += deleteFolderToolStripMenuItem_Click;
+
+            var refreshToolStripMenuItem = new ToolStripMenuItem();
+            refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
+
+            var treeContextMenu = new ContextMenuStrip();
+            treeContextMenu.Items.AddRange(new ToolStripItem[] 
+            {
+                _createFolderToolStripMenuItem,
+                _deleteFolderToolStripMenuItem,
+                refreshToolStripMenuItem 
+            });
+            treeContextMenu.Opening += treeContextMenu_Opening;
+
+            _treeView.ContextMenuStrip = treeContextMenu;
+        }
+
+        private void createFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dlg = new CreateFolderForm();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                var node = _treeView.SelectedNode;
+                string bucketName = string.Empty;
+                string? baseFolder = null;
+                if (node.Tag is YBucketInfo bi)
+                {
+                    bucketName = bi.Name;
+                }
+                else if (node.Tag is YFolderInfo fi)
+                {
+                    bucketName = fi.BucketName;
+                    baseFolder = fi.Key;
+                }
+                Utils.DoBackground(
+                    () =>
+                    {
+                        YFolder.CreateAsync(_yClient, bucketName, dlg.FolderName, baseFolder).GetAwaiter().GetResult();
+                    },
+                    () =>
+                    {
+                        RefreshNode(node);
+                    },
+                    (ex) =>
+                    {
+                        ShowMessageBox(ex);
+                    });
+            }
+        }
+
+        private void deleteFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var node = _treeView.SelectedNode;
+            if (MessageBox.Show($"Do you really want to delete '{node.Text}' ?", "Delete Folder", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
+                == DialogResult.OK)
+            {
+                var fi = node.Tag as YFolderInfo;
+                Utils.DoBackground(
+                    () =>
+                    {
+                        YFolder.DeleteAsync(_yClient, fi).GetAwaiter().GetResult();
+                    },
+                    () =>
+                    {
+                        RefreshNode(node.Parent);
+                    },
+                    (ex) =>
+                    {
+                        ShowMessageBox(ex);
+                    });
+            }
+        }
+
+        private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RefreshNode(_treeView.SelectedNode);
+        }
+
+        private void RefreshNode(TreeNode? node)
+        {
+            if (node == null) return;
+            Utils.DoBackground(
+               () =>
+               {
+                   if (node.Tag is YBucketInfo bi)
+                   {
+                       return YFolder.GetAllAsync(_yClient, bi.Name).GetAwaiter().GetResult();
+                   }
+                   else if (node.Tag is YFolderInfo fi)
+                   {
+                       return YFolder.GetAllAsync(_yClient, fi.BucketName, fi.Key).GetAwaiter().GetResult();
+                   }
+                   else
+                   {
+                       return new List<YFolderInfo>();
+                   }
+               },
+               (lstFolder) =>
+               {
+                   node.Nodes.Clear();
+                   var nodes = lstFolder.Select(CreateFolderNode).ToArray();
+                   node.Nodes.AddRange(nodes);
+                   node.Expand();
+               },
+               (ex) =>
+               {
+                   ShowMessageBox(ex);
+               });
+        }
+
+        private void treeContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var selected = _treeView.SelectedNode?.Tag;
+            _createFolderToolStripMenuItem!.Enabled = selected != null;
+            _deleteFolderToolStripMenuItem!.Enabled = selected is YFolderInfo;
         }
 
         private void ObjectListViewController_FolderDoubleClick(object? sender, FolderEventArgs e)
@@ -99,35 +230,9 @@ namespace Dotkit.YandexObjectStorage.Browser
                 return;
             }
 
-            if (_updatedNodes.Add(e.Node))
+            if (_initializedNodes.Add(e.Node))
             {
-                Utils.DoBackground(
-                    () =>
-                    {
-                        if (e.Node.Tag is YBucketInfo bi)
-                        {
-                            return YFolder.GetAllAsync(_yClient, bi.Name).GetAwaiter().GetResult();
-                        }
-                        else if (e.Node.Tag is YFolderInfo fi)
-                        {
-                            return YFolder.GetAllAsync(_yClient, fi.BucketName, fi.Name).GetAwaiter().GetResult();
-                        }
-                        else
-                        {
-                            return new List<YFolderInfo>();
-                        }
-                    },
-                    (lstFolder) =>
-                    {
-                        e.Node.Nodes.Clear();
-                        var nodes = lstFolder.Select(CreateFolderNode).ToArray();
-                        e.Node.Nodes.AddRange(nodes);
-                        e.Node.Expand();
-                    },
-                    (ex) =>
-                    {
-                        ShowMessageBox(ex);
-                    });
+                RefreshNode(e.Node);
             }
 
             if (e.Node.Tag is YBucketInfo bi)
@@ -164,6 +269,11 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeView_BeforeExpand(object? sender, TreeViewCancelEventArgs e)
         {
+            if (e.Node != null && _initializedNodes.Add(e.Node))
+            {
+                RefreshNode(e.Node);
+            }
+
             if (e.Node?.Tag is YFolderInfo)
             {
                 e.Node.ImageKey = "open_folder";

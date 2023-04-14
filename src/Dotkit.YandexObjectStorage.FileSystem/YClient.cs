@@ -160,7 +160,7 @@ namespace Dotkit.YandexObjectStorage.FileSystem
             if (folderInfo == null) throw new ArgumentNullException(nameof(folderInfo));
             try
             {
-                var objects = await GetObjectsAsync(folderInfo.BucketName, folderInfo.Folder);
+                var objects = await GetObjectsAsync(folderInfo.BucketName, folderInfo.Key);
                 foreach (var obj in objects)
                 {
                     var response = await _s3Client.DeleteObjectAsync(folderInfo.BucketName, obj.Key).ConfigureAwait(false);
