@@ -17,7 +17,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         public event EventHandler<FolderEventArgs>? FolderDoubleClick;
         public event EventHandler? CreateNewFolder;
-        public event EventHandler<FolderEventArgs>? DeleteFolder;
+        public event EventHandler<FoldersEventArgs>? DeleteFolders;
         public event EventHandler? Refresh;
 
         public ObjectListViewController(YClient yosClient, ListView listView)
@@ -136,14 +136,15 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void deleteFolderToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            //TODO: multiselect - некорректно работает !!!
+            var folders = new List<YFolderInfo>();
             foreach (ListViewItem item in _listView.SelectedItems)
             {
                 if (item.Tag is YFolderInfo fi)
                 {
-                    DeleteFolder?.Invoke(this, new FolderEventArgs(fi));
+                    folders.Add(fi);
                 }
             }
+            DeleteFolders?.Invoke(this, new FoldersEventArgs(folders.ToArray()));
         }
 
         private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)

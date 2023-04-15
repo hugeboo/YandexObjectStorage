@@ -12,6 +12,8 @@ namespace Dotkit.YandexObjectStorage.FileSystem
     {
         public HttpStatusCode StatusCode { get; private set; }
 
+        public YException(string message) : base(message) { }
+
         public YException(string message, HttpStatusCode statusCode)
             : base($"{message} StatusCode={statusCode}")
         {

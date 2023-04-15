@@ -24,5 +24,12 @@ namespace Dotkit.YandexObjectStorage.FileSystem
         {
             await client.DeleteFolderAsync(folderInfo).ConfigureAwait(false);
         }
+        
+        public static async Task DeleteAsync(YClient client, IEnumerable<YFolderInfo> folderInfos)
+        {
+            await client.DeleteFoldersAsync(folderInfos).ConfigureAwait(false);
+        }
+
+
     }
 }

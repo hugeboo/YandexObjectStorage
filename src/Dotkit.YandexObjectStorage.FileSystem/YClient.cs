@@ -1,5 +1,6 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+using System.Linq;
 using System.Net;
 using System.Security.AccessControl;
 using System.Xml.Linq;
@@ -161,19 +162,51 @@ namespace Dotkit.YandexObjectStorage.FileSystem
             try
             {
                 var objects = await GetObjectsAsync(folderInfo.BucketName, folderInfo.Key);
-                foreach (var obj in objects)
-                {
-                    var response = await _s3Client.DeleteObjectAsync(folderInfo.BucketName, obj.Key).ConfigureAwait(false);
-                    if (response.HttpStatusCode != HttpStatusCode.NoContent)
-                        throw new YException($"Cannot delete object '{obj.FullPath}'", response.HttpStatusCode);
-                }
-                var response2 = await _s3Client.DeleteObjectAsync(folderInfo.BucketName, folderInfo.Key).ConfigureAwait(false);
-                if (response2.HttpStatusCode != HttpStatusCode.NoContent)
-                    throw new YException($"Cannot delete folder '{folderInfo.BucketName}://{folderInfo.Key}'", response2.HttpStatusCode);
+
+                var keys = objects.Select(it => new KeyVersion { Key = it.Key }).ToList();
+
+                var request = new DeleteObjectsRequest { BucketName = folderInfo.BucketName, Objects = keys };
+
+                var response = await _s3Client.DeleteObjectsAsync(request).ConfigureAwait(false);
+                if (response.HttpStatusCode != HttpStatusCode.OK)
+                    throw new YException($"Error when deleting '{folderInfo.FullPath}'", response.HttpStatusCode);
             }
             catch (AmazonS3Exception ex)
             {
                 throw new YException(ex, $"Bucket={folderInfo.BucketName} Key={folderInfo.Key}");
+            }
+        }
+        
+        internal async Task DeleteFoldersAsync(IEnumerable<YFolderInfo> folderInfos)
+        {
+            if (folderInfos == null) throw new ArgumentNullException(nameof(folderInfos));
+            try
+            {
+                var objects = new List<YObjectInfo>();
+                string? bucketName = null;
+                foreach(var fi in folderInfos)
+                {
+                    if (bucketName == null) { bucketName = fi.BucketName; }
+                    else
+                    {
+                        if (fi.BucketName != bucketName)
+                            throw new YException("Cannot multiple deleting from different buckets");
+                    }
+                    var lst = await GetObjectsAsync(fi.BucketName, fi.Key);
+                    objects.AddRange(lst);
+                }
+
+                var keys = objects.Select(it => new KeyVersion { Key = it.Key }).ToList();
+
+                var request = new DeleteObjectsRequest { BucketName = bucketName, Objects = keys };
+
+                var response = await _s3Client.DeleteObjectsAsync(request).ConfigureAwait(false);
+                if (response.HttpStatusCode != HttpStatusCode.OK)
+                    throw new YException("Error when multiple deleting", response.HttpStatusCode);
+            }
+            catch (AmazonS3Exception ex)
+            {
+                throw new YException(ex);
             }
         }
 

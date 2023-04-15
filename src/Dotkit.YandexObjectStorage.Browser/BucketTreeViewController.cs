@@ -37,7 +37,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             objectListViewController.FolderDoubleClick += ObjectListViewController_FolderDoubleClick;
             objectListViewController.CreateNewFolder += ObjectListViewController_CreateNewFolder;
-            objectListViewController.DeleteFolder += ObjectListViewController_DeleteFolder;
+            objectListViewController.DeleteFolders += ObjectListViewController_DeleteFolders;
             objectListViewController.Refresh += ObjectListViewController_Refresh;
         }
 
@@ -46,12 +46,9 @@ namespace Dotkit.YandexObjectStorage.Browser
             RefreshNode(_treeView.SelectedNode);
         }
 
-        private void ObjectListViewController_DeleteFolder(object? sender, FolderEventArgs e)
+        private void ObjectListViewController_DeleteFolders(object? sender, FoldersEventArgs e)
         {
-            if(_nodeByFolderKey.TryGetValue(e.Folder.Key, out TreeNode? node))
-            {
-                DeleteFolder(node);
-            }
+            DeleteFolders(_treeView.SelectedNode, e.Folders);
         }
 
         private void ObjectListViewController_CreateNewFolder(object? sender, EventArgs e)
@@ -139,6 +136,27 @@ namespace Dotkit.YandexObjectStorage.Browser
                     () =>
                     {
                         RefreshNode(node.Parent);
+                    },
+                    (ex) =>
+                    {
+                        ShowMessageBox(ex);
+                    });
+            }
+        }
+
+        private void DeleteFolders(TreeNode parentNode, IEnumerable<YFolderInfo> folders)
+        {
+            if (MessageBox.Show($"Do you really want to delete {folders.Count()} folders?", "Delete Folders", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
+                == DialogResult.OK)
+            {
+                Utils.DoBackground(
+                    () =>
+                    {
+                        YFolder.DeleteAsync(_yClient, folders).GetAwaiter().GetResult();
+                    },
+                    () =>
+                    {
+                        RefreshNode(parentNode);
                     },
                     (ex) =>
                     {
@@ -329,6 +347,15 @@ namespace Dotkit.YandexObjectStorage.Browser
         public FolderEventArgs(YFolderInfo folder)
         {
             Folder = folder;
+        }
+    }
+
+    public sealed class FoldersEventArgs : EventArgs
+    {
+        public YFolderInfo[] Folders { get; }
+        public FoldersEventArgs(YFolderInfo[] folders)
+        {
+            Folders = folders;
         }
     }
 }
