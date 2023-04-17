@@ -23,20 +23,40 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             _service = _s3Config.CreateService();
             _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView);
-            _objectListViewController = new ObjectListViewController(_service, mainListView);
+            _objectListViewController = new ObjectListViewController(_service, mainListView, this);
             _bucketTreeViewController.Attach(_objectListViewController);
             _objectListViewController.Attach(_bucketTreeViewController);
 
-            //var client = new YOSClient(new YOSConfig());
-            //var buckets = client.GetBuckets().Result;
-            //var folders = client.GetFolders(buckets[0].Name!).Result;
-            //var objects = client.GetObjects(buckets[0].Name!, "").Result;
-            //var filePath = client.DownloadObject(buckets[0].Name!, objects[0].Key!, "c:\\temp").Result;
+            _objectListViewController.SelectedChanged += objectListViewController_SelectedChanged;
+        }
+
+        private void objectListViewController_SelectedChanged(object? sender, ItemsEventArgs e)
+        {
+            if (e.Items.Length != 1)
+            {
+                toolStripStatusLabel1.Text = string.Empty;
+                toolStripStatusLabel2.Text = string.Empty;
+                toolStripStatusLabel3.Text = string.Empty;
+            }
+            else
+            {
+                toolStripStatusLabel3.Text = e.Items[0].LastModifiedTime.ToString(" HH:mm:ss dd.MM.yyyy");
+                if (e.Items[0].Type == FileSystemType.Directory)
+                {
+                    toolStripStatusLabel1.Text = $"Directory: {e.Items[0].Name}";
+                    toolStripStatusLabel2.Text = string.Empty;
+                }
+                else if (e.Items[0] is S3FileInfo fi)
+                {
+                    toolStripStatusLabel1.Text = $"File: {fi.Name}";
+                    toolStripStatusLabel2.Text = FileSizeFormatter.FormatSize(fi.Length);
+                }
+            }
         }
 
         private void ApplyConfig()
         {
-            this.Text = $"{this.Text} - {_s3Config}";
+            this.Text = $"{this.Text} - {_s3Config.BucketName}";
             if (Program.Config.UIState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = Program.Config.UIState.MainSlitterDistance;
             if (Program.Config.UIState.MainFormWidth > 0 && Program.Config.UIState.MainFormHeight > 0)
                 this.Size = new Size(Program.Config.UIState.MainFormWidth, Program.Config.UIState.MainFormHeight);

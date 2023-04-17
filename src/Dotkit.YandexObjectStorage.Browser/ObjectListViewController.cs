@@ -13,6 +13,7 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly IS3Service _service;
         private readonly ListView _listView;
+        private readonly MainForm _mainForm;
 
         private ToolStripMenuItem? _deleteToolStripMenuItem;
         private ToolStripMenuItem? _copyToolStripMenuItem;
@@ -24,13 +25,34 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? CreateNewFolder;
         public event EventHandler<ItemsEventArgs>? DeleteItems;
         public event EventHandler? Refresh;
+        public event EventHandler<ItemsEventArgs>? SelectedChanged;
 
-        public ObjectListViewController(IS3Service service, ListView listView)
+        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm)
         {
             _service = service;
             _listView = listView;
+            _mainForm = mainForm;
             listView.MouseDoubleClick += ListView_MouseDoubleClick;
+            listView.ItemSelectionChanged += ListView_ItemSelectionChanged;
             CreateContextMenu();
+        }
+
+        private void ListView_ItemSelectionChanged(object? sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            FireSelectedChanged();
+        }
+
+        private void FireSelectedChanged()
+        {
+            var items = new List<IS3FileSystemInfo>();
+            foreach (ListViewItem item in _listView.SelectedItems)
+            {
+                if (item.Tag is IS3FileSystemInfo si)
+                {
+                    items.Add(si);
+                }
+            }
+            SelectedChanged?.Invoke(this, new ItemsEventArgs(items.ToArray()));
         }
 
         private void ListView_MouseDoubleClick(object? sender, MouseEventArgs e)
@@ -68,6 +90,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             if (_currentFolder == null)
             {
                 _listView.Items.Clear();
+                FireSelectedChanged();
                 return;
             }
 
@@ -83,6 +106,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                     var items = new List<ListViewItem>();
                     items.AddRange(lstFiles.Select(CreateItem));
                     _listView.Items.AddRange(items.ToArray());
+                    FireSelectedChanged();
                 },
                 (ex) =>
                 {
@@ -199,9 +223,26 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         }
 
+        private ProgressForm ShowProgress(string message)
+        {
+            var progress = new ProgressForm
+            {
+                Message = message
+            };
+            progress.Show();
+            progress.Location = new Point(
+                _mainForm.Left + (_mainForm.Width - progress.Width) / 2,
+                _mainForm.Top + (_mainForm.Height - progress.Height) / 2);
+
+            return progress;
+        }
+
         private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (_currentFolder == null) return;
+
+            var progress = ShowProgress("Uploading file...");
+
             foreach(var filePath in Clipboard.GetFileDropList())
             {
                 Utils.DoBackground(
@@ -214,10 +255,12 @@ namespace Dotkit.YandexObjectStorage.Browser
                     },
                     () =>
                     {
+                        progress.Close();
                         UpdateItems();
                     },
                     (ex) =>
                     {
+                        progress.Close();
                         ShowMessageBox(ex);
                     });
             }
