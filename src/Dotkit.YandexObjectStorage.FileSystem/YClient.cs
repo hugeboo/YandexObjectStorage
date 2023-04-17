@@ -1,5 +1,7 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Transfer;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.AccessControl;
@@ -102,7 +104,7 @@ namespace Dotkit.YandexObjectStorage.FileSystem
         {
             try
             {
-                var request = new ListObjectsV2Request { BucketName = bucketName, Prefix = baseFolder.AddEndPathDelimeter() };
+                var request = new ListObjectsV2Request { BucketName = bucketName, Prefix = baseFolder.AddEndPathDelimeter(), Delimiter = PATH_DELIMETER };
                 var response = await _s3Client.ListObjectsV2Async(request).ConfigureAwait(false);
 
                 if (response.HttpStatusCode != HttpStatusCode.OK)
@@ -113,6 +115,48 @@ namespace Dotkit.YandexObjectStorage.FileSystem
             catch (AmazonS3Exception ex)
             {
                 throw new YException(ex);
+            }
+        }
+
+        internal async Task UploadFileAsync(YFolderInfo folder, string filePath)
+        {
+            try 
+            {
+                var file = new FileInfo(filePath);
+
+                var fileName = Path.GetFileName(filePath);
+                var key = Path.Combine(folder.Key, fileName);
+
+                var fileTransferUtility = new TransferUtility(_s3Client);
+
+                var fileTransferUtilityRequest = new TransferUtilityUploadRequest
+                {
+                    BucketName = folder.BucketName,
+                    FilePath = filePath,
+                    StorageClass = S3StorageClass.StandardInfrequentAccess,
+                    PartSize = 6291456, // 6 MB.
+                    Key = key,
+                    CannedACL = S3CannedACL.PublicRead
+                };
+                //fileTransferUtilityRequest.Metadata.Add("param1", "Value1");
+                //fileTransferUtilityRequest.Metadata.Add("param2", "Value2");
+
+                await fileTransferUtility.UploadAsync(fileTransferUtilityRequest);
+
+                // Вариант 2:
+                //var request = new PutObjectRequest()
+                //{
+                //    InputStream = file.OpenRead(),
+                //    BucketName = folder.BucketName,
+                //    Key = key
+                //};
+                //var response = await _s3Client.PutObjectAsync(request);
+                //if (response.HttpStatusCode != HttpStatusCode.OK)
+                //    throw new YException($"Cannot upload file '{filePath}'", response.HttpStatusCode);
+            }
+            catch (AmazonS3Exception ex)
+            {
+                throw new YException(ex, $"Bucket={folder.BucketName} Folder={folder.Key} FilePath={filePath}");
             }
         }
 

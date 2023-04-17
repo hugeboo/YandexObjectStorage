@@ -1,10 +1,11 @@
-using Dotkit.YandexObjectStorage.FileSystem;
+using Dotkit.S3;
 
 namespace Dotkit.YandexObjectStorage.Browser
 {
     public partial class MainForm : Form
     {
-        private readonly YClient _yosClient;
+        private readonly S3Configuration _s3Config;
+        private readonly IS3Service _service;
         private readonly BucketTreeViewController _bucketTreeViewController;
         private readonly ObjectListViewController _objectListViewController;
 
@@ -12,9 +13,17 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             InitializeComponent();
 
-            _yosClient = new YClient(Program.Config.YConfig);
-            _bucketTreeViewController = new BucketTreeViewController(_yosClient, mainTreeView);
-            _objectListViewController = new ObjectListViewController(_yosClient, mainListView);
+            _s3Config = new S3Configuration
+            {
+                ServiceURL = "https://s3.yandexcloud.net",
+                AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br",
+                SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N",
+                BucketName = "test1-sesv"
+            };
+
+            _service = _s3Config.CreateService();
+            _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView);
+            _objectListViewController = new ObjectListViewController(_service, mainListView);
             _bucketTreeViewController.Attach(_objectListViewController);
             _objectListViewController.Attach(_bucketTreeViewController);
 
@@ -27,7 +36,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void ApplyConfig()
         {
-            this.Text = $"{this.Text} - {Program.Config.YConfig.ServiceURL}";
+            this.Text = $"{this.Text} - {_s3Config}";
             if (Program.Config.UIState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = Program.Config.UIState.MainSlitterDistance;
             if (Program.Config.UIState.MainFormWidth > 0 && Program.Config.UIState.MainFormHeight > 0)
                 this.Size = new Size(Program.Config.UIState.MainFormWidth, Program.Config.UIState.MainFormHeight);

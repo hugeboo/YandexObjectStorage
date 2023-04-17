@@ -1,4 +1,4 @@
-﻿using Dotkit.YandexObjectStorage.FileSystem;
+﻿using Dotkit.S3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal class Configuration
     {
-        public YConfig YConfig { get; set; } = new YConfig();
+        public S3Configuration S3Configuration { get; set; } = new S3Configuration();
         public UIState UIState { get; set; } = new UIState();
     }
 

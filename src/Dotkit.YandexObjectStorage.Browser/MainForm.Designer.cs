@@ -17,7 +17,7 @@
             {
                 components.Dispose();
             }
-            _yosClient.Dispose();
+            //_service.Dispose();
             base.Dispose(disposing);
         }
 
@@ -39,6 +39,7 @@
             treeImageList = new ImageList(components);
             mainListView = new ListView();
             listLargeImageList = new ImageList(components);
+            listSmallImageList = new ImageList(components);
             ((System.ComponentModel.ISupportInitialize)mainSplitContainer).BeginInit();
             mainSplitContainer.Panel1.SuspendLayout();
             mainSplitContainer.Panel2.SuspendLayout();
@@ -123,9 +124,12 @@
             mainListView.LargeImageList = listLargeImageList;
             mainListView.Location = new Point(0, 0);
             mainListView.Name = "mainListView";
+            mainListView.ShowItemToolTips = true;
             mainListView.Size = new Size(595, 390);
+            mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
+            mainListView.View = View.Tile;
             // 
             // listLargeImageList
             // 
@@ -133,6 +137,15 @@
             listLargeImageList.ImageStream = (ImageListStreamer)resources.GetObject("listLargeImageList.ImageStream");
             listLargeImageList.TransparentColor = Color.Transparent;
             listLargeImageList.Images.SetKeyName(0, "folder");
+            listLargeImageList.Images.SetKeyName(1, "file_default");
+            // 
+            // listSmallImageList
+            // 
+            listSmallImageList.ColorDepth = ColorDepth.Depth8Bit;
+            listSmallImageList.ImageStream = (ImageListStreamer)resources.GetObject("listSmallImageList.ImageStream");
+            listSmallImageList.TransparentColor = Color.Transparent;
+            listSmallImageList.Images.SetKeyName(0, "file_default");
+            listSmallImageList.Images.SetKeyName(1, "folder");
             // 
             // MainForm
             // 
@@ -168,5 +181,6 @@
         private ListView mainListView;
         private ImageList treeImageList;
         private ImageList listLargeImageList;
+        private ImageList listSmallImageList;
     }
 }

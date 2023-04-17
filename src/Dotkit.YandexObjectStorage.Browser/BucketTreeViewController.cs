@@ -1,4 +1,4 @@
-﻿using Dotkit.YandexObjectStorage.FileSystem;
+﻿using Dotkit.S3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,7 +10,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class BucketTreeViewController
     {
-        private readonly YClient _yClient;
+        private readonly IS3Service _service;
         private readonly TreeView _treeView;
         private readonly HashSet<TreeNode> _initializedNodes = new();
         private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new();
@@ -19,12 +19,11 @@ namespace Dotkit.YandexObjectStorage.Browser
         private ToolStripMenuItem? _deleteFolderToolStripMenuItem;
 
         public event EventHandler? EmptySelectedChanged;
-        public event EventHandler<BucketEventArgs>? BucketSelectedChanged;
         public event EventHandler<FolderEventArgs>? FolderSelectedChanged;
 
-        public BucketTreeViewController(YClient yosClient, TreeView treeView)
+        public BucketTreeViewController(IS3Service service, TreeView treeView)
         {
-            _yClient = yosClient;
+            _service = service;
             _treeView = treeView;
             _treeView.AfterSelect += treeView_AfterSelect;
             _treeView.MouseClick += treeView_MouseClick;
@@ -37,7 +36,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             objectListViewController.FolderDoubleClick += ObjectListViewController_FolderDoubleClick;
             objectListViewController.CreateNewFolder += ObjectListViewController_CreateNewFolder;
-            objectListViewController.DeleteFolders += ObjectListViewController_DeleteFolders;
+            objectListViewController.DeleteItems += ObjectListViewController_DeleteFolders;
             objectListViewController.Refresh += ObjectListViewController_Refresh;
         }
 
@@ -46,9 +45,9 @@ namespace Dotkit.YandexObjectStorage.Browser
             RefreshNode(_treeView.SelectedNode);
         }
 
-        private void ObjectListViewController_DeleteFolders(object? sender, FoldersEventArgs e)
+        private void ObjectListViewController_DeleteFolders(object? sender, ItemsEventArgs e)
         {
-            DeleteFolders(_treeView.SelectedNode, e.Folders);
+            DeleteItems(_treeView.SelectedNode, e.Items);
         }
 
         private void ObjectListViewController_CreateNewFolder(object? sender, EventArgs e)
@@ -74,6 +73,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             treeContextMenu.Items.AddRange(new ToolStripItem[] 
             {
                 _createFolderToolStripMenuItem,
+                new ToolStripSeparator(),
                 _deleteFolderToolStripMenuItem,
                 new ToolStripSeparator(),
                 refreshToolStripMenuItem 
@@ -89,21 +89,14 @@ namespace Dotkit.YandexObjectStorage.Browser
             if (dlg.ShowDialog() == DialogResult.OK)
             {
                 var node = _treeView.SelectedNode;
-                string bucketName = string.Empty;
-                string? baseFolder = null;
-                if (node.Tag is YBucketInfo bi)
-                {
-                    bucketName = bi.Name;
-                }
-                else if (node.Tag is YFolderInfo fi)
-                {
-                    bucketName = fi.BucketName;
-                    baseFolder = fi.Key;
-                }
+                var parentFolder = node?.Tag as S3DirectoryInfo;
                 Utils.DoBackground(
                     () =>
                     {
-                        YFolder.CreateAsync(_yClient, bucketName, dlg.FolderName, baseFolder).GetAwaiter().GetResult();
+                        if (parentFolder == null) parentFolder = _service.Root;
+
+                        var fi = parentFolder.GetSubDirectoryAsync(dlg.FolderName).ConfigureAwait(false).GetAwaiter().GetResult();
+                        fi.CreateAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                     },
                     () =>
                     {
@@ -123,7 +116,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void DeleteFolder(TreeNode node)
         {
-            if (node.Tag is not YFolderInfo fi) return;
+            if (node.Tag is not S3DirectoryInfo fi) return;
 
             if (MessageBox.Show($"Do you really want to delete '{node.Text}' ?", "Delete Folder", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
                 == DialogResult.OK)
@@ -131,7 +124,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                 Utils.DoBackground(
                     () =>
                     {
-                        YFolder.DeleteAsync(_yClient, fi).GetAwaiter().GetResult();
+                        fi.DeleteAsync(true).ConfigureAwait(false).GetAwaiter().GetResult();
                     },
                     () =>
                     {
@@ -144,15 +137,18 @@ namespace Dotkit.YandexObjectStorage.Browser
             }
         }
 
-        private void DeleteFolders(TreeNode parentNode, IEnumerable<YFolderInfo> folders)
+        private void DeleteItems(TreeNode parentNode, IEnumerable<IS3FileSystemInfo> items)
         {
-            if (MessageBox.Show($"Do you really want to delete {folders.Count()} folders?", "Delete Folders", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
+            if (MessageBox.Show($"Do you really want to delete {items.Count()} items?", "Delete Items", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
                 == DialogResult.OK)
             {
                 Utils.DoBackground(
                     () =>
                     {
-                        YFolder.DeleteAsync(_yClient, folders).GetAwaiter().GetResult();
+                        foreach(var item in items)
+                        {
+                            item.DeleteAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                        }
                     },
                     () =>
                     {
@@ -176,17 +172,13 @@ namespace Dotkit.YandexObjectStorage.Browser
             Utils.DoBackground(
                () =>
                {
-                   if (node.Tag is YBucketInfo bi)
+                   if (node.Tag is S3DirectoryInfo fi)
                    {
-                       return YFolder.GetAllAsync(_yClient, bi.Name).GetAwaiter().GetResult();
-                   }
-                   else if (node.Tag is YFolderInfo fi)
-                   {
-                       return YFolder.GetAllAsync(_yClient, fi.BucketName, fi.Key).GetAwaiter().GetResult();
+                       return fi.GetDirectories().ConfigureAwait(false).GetAwaiter().GetResult();
                    }
                    else
                    {
-                       return new List<YFolderInfo>();
+                       return new List<S3DirectoryInfo>();
                    }
                },
                (lstFolder) =>
@@ -206,16 +198,16 @@ namespace Dotkit.YandexObjectStorage.Browser
         private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             var selected = _treeView.SelectedNode?.Tag;
-            _createFolderToolStripMenuItem!.Enabled = selected != null;
-            _deleteFolderToolStripMenuItem!.Enabled = selected is YFolderInfo;
+            _createFolderToolStripMenuItem!.Enabled = true;
+            _deleteFolderToolStripMenuItem!.Enabled = selected != null;
         }
 
         private void ObjectListViewController_FolderDoubleClick(object? sender, FolderEventArgs e)
         {
-            if (_nodeByFolderKey.TryGetValue(e.Folder.Key, out TreeNode? node))
+            if (_nodeByFolderKey.TryGetValue(e.Folder.FullName, out TreeNode? node))
             {
                 _treeView.SelectedNode = node;
-                node.Expand();
+                node!.Expand();
             }
         }
 
@@ -225,11 +217,11 @@ namespace Dotkit.YandexObjectStorage.Browser
             Utils.DoBackground(
                 () => 
                 {
-                    return YBucket.GetAllAsync(_yClient).GetAwaiter().GetResult();
+                    return _service.Root.GetDirectories().ConfigureAwait(false).GetAwaiter().GetResult();
                 }, 
-                (lstBucket) => 
+                (lstFolders) => 
                 {
-                    var nodes = lstBucket.Select(CreateBucketNode).ToArray();
+                    var nodes = lstFolders.Select(CreateFolderNode).ToArray();
                     _treeView.Nodes.AddRange(nodes);
                     _treeView.SelectedNode = nodes.FirstOrDefault();
                 }, 
@@ -239,17 +231,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                 });
         }
 
-        private TreeNode CreateBucketNode(YBucketInfo bucket)
-        {
-            return new TreeNode(bucket.Name)
-            {
-                Tag = bucket,
-                ImageKey = "bucket",
-                SelectedImageKey = "bucket"
-            };
-        }
-
-        private TreeNode CreateFolderNode(YFolderInfo folder)
+        private TreeNode CreateFolderNode(S3DirectoryInfo folder)
         {
             var node = new TreeNode(folder.Name)
             {
@@ -258,7 +240,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                 SelectedImageKey = "folder"
             };
             node.Nodes.Add(new TreeNode());
-            _nodeByFolderKey[folder.Key] = node;
+            _nodeByFolderKey[folder.FullName] = node;
             return node;
         }
 
@@ -285,11 +267,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void FireSelectedChanged(TreeNode node)
         {
-            if (node.Tag is YBucketInfo bi)
-            {
-                BucketSelectedChanged?.Invoke(this, new BucketEventArgs(bi));
-            }
-            else if (node.Tag is YFolderInfo fi)
+            if (node.Tag is S3DirectoryInfo fi)
             {
                 FolderSelectedChanged?.Invoke(this, new FolderEventArgs(fi));
             }
@@ -310,7 +288,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeView_BeforeCollapse(object? sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node?.Tag is YFolderInfo)
+            if (e.Node?.Tag is S3DirectoryInfo)
             {
                 e.Node.ImageKey = "folder";
                 e.Node.SelectedImageKey = "folder";
@@ -324,7 +302,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                 RefreshNode(e.Node);
             }
 
-            if (e.Node?.Tag is YFolderInfo)
+            if (e.Node?.Tag is S3DirectoryInfo)
             {
                 e.Node.ImageKey = "open_folder";
                 e.Node.SelectedImageKey = "open_folder";
@@ -332,30 +310,21 @@ namespace Dotkit.YandexObjectStorage.Browser
         }
     }
 
-    public sealed class BucketEventArgs : EventArgs
-    {
-        public YBucketInfo Bucket { get; }
-        public BucketEventArgs(YBucketInfo bucket)
-        {
-            Bucket = bucket;
-        }
-    }
-
     public sealed class FolderEventArgs : EventArgs
     {
-        public YFolderInfo Folder { get; }
-        public FolderEventArgs(YFolderInfo folder)
+        public S3DirectoryInfo Folder { get; }
+        public FolderEventArgs(S3DirectoryInfo folder)
         {
             Folder = folder;
         }
     }
 
-    public sealed class FoldersEventArgs : EventArgs
+    public sealed class ItemsEventArgs : EventArgs
     {
-        public YFolderInfo[] Folders { get; }
-        public FoldersEventArgs(YFolderInfo[] folders)
+        public IS3FileSystemInfo[] Items { get; }
+        public ItemsEventArgs(IS3FileSystemInfo[] items)
         {
-            Folders = folders;
+            Items = items;
         }
     }
 }

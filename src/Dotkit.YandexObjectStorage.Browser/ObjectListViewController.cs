@@ -1,8 +1,9 @@
-﻿using Dotkit.YandexObjectStorage.FileSystem;
+﻿using Dotkit.S3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,19 +11,23 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class ObjectListViewController
     {
-        private readonly YClient _yClient;
+        private readonly IS3Service _service;
         private readonly ListView _listView;
 
-        private ToolStripMenuItem? _deleteFolderToolStripMenuItem;
+        private ToolStripMenuItem? _deleteToolStripMenuItem;
+        private ToolStripMenuItem? _copyToolStripMenuItem;
+        private ToolStripMenuItem? _pasteToolStripMenuItem;
+
+        private S3DirectoryInfo? _currentFolder;
 
         public event EventHandler<FolderEventArgs>? FolderDoubleClick;
         public event EventHandler? CreateNewFolder;
-        public event EventHandler<FoldersEventArgs>? DeleteFolders;
+        public event EventHandler<ItemsEventArgs>? DeleteItems;
         public event EventHandler? Refresh;
 
-        public ObjectListViewController(YClient yosClient, ListView listView)
+        public ObjectListViewController(IS3Service service, ListView listView)
         {
-            _yClient = yosClient;
+            _service = service;
             _listView = listView;
             listView.MouseDoubleClick += ListView_MouseDoubleClick;
             CreateContextMenu();
@@ -33,7 +38,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             var ht = _listView.HitTest(e.Location);
             if (ht.Item != null)
             {
-                if (ht.Item.Tag is YFolderInfo fi)
+                if (ht.Item.Tag is S3DirectoryInfo fi)
                 {
                     FolderDoubleClick?.Invoke(this, new FolderEventArgs(fi));
                 }
@@ -42,28 +47,42 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         public void Attach(BucketTreeViewController bucketTreeViewController)
         {
-            bucketTreeViewController.BucketSelectedChanged += BucketTreeViewController_BucketSelectedChanged;
             bucketTreeViewController.FolderSelectedChanged += BucketTreeViewController_FolderSelectedChanged;
             bucketTreeViewController.EmptySelectedChanged += BucketTreeViewController_EmptySelectedChanged;
         }
 
         private void BucketTreeViewController_EmptySelectedChanged(object? sender, EventArgs e)
         {
-            _listView.Items.Clear();
+            _currentFolder = null;
+            UpdateItems();
         }
 
         private void BucketTreeViewController_FolderSelectedChanged(object? sender, FolderEventArgs e)
         {
+            _currentFolder = e.Folder;
+            UpdateItems();
+        }
+
+        private void UpdateItems()
+        {
+            if (_currentFolder == null)
+            {
+                _listView.Items.Clear();
+                return;
+            }
+
             Utils.DoBackground(
                 () =>
                 {
-                    return YFolder.GetAllAsync(_yClient, e.Folder!.BucketName, e.Folder!.Name).GetAwaiter().GetResult();
+                    var lstFiles = _currentFolder.GetItems().ConfigureAwait(false).GetAwaiter().GetResult();
+                    return lstFiles;
                 },
-                (lstFolder) =>
+                (lstFiles) =>
                 {
                     _listView.Items.Clear();
-                    var items = lstFolder.Select(CreateFolderItem).ToArray();
-                    _listView.Items.AddRange(items);
+                    var items = new List<ListViewItem>();
+                    items.AddRange(lstFiles.Select(CreateItem));
+                    _listView.Items.AddRange(items.ToArray());
                 },
                 (ex) =>
                 {
@@ -71,30 +90,32 @@ namespace Dotkit.YandexObjectStorage.Browser
                 });
         }
 
-        private void BucketTreeViewController_BucketSelectedChanged(object? sender, BucketEventArgs e)
+        private ListViewItem CreateItem(IS3FileSystemInfo s3Item)
         {
-            Utils.DoBackground(
-                () =>
-                {
-                    return YFolder.GetAllAsync(_yClient, e.Bucket!.Name).GetAwaiter().GetResult();
-                },
-                (lstFolder) =>
-                {
-                    _listView.Items.Clear();
-                    var items = lstFolder.Select(CreateFolderItem).ToArray();
-                    _listView.Items.AddRange(items);
-                },
-                (ex) =>
-                {
-                    ShowMessageBox(ex);
-                });
-        }
-
-        private ListViewItem CreateFolderItem(YFolderInfo folder)
-        {
-            var item = new ListViewItem(folder.Name, "folder");
-            item.Tag = folder;
+            string imgKey = s3Item.Type == FileSystemType.Directory ? "folder" : EnsureFileImageKey(s3Item);
+            var item = new ListViewItem(s3Item.Name, imgKey);
+            item.Tag = s3Item;
             return item;
+        }
+
+        private string EnsureFileImageKey(IS3FileSystemInfo s3Item)
+        {
+            //var imageList = _listView.LargeImageList;
+            //if (imageList.Images.ContainsKey(s3Item.Extension))
+            //{
+            //    return s3Item.Extension;
+            //}
+            //else
+            //{
+                
+            //    var icon = Icon.ExtractAssociatedIcon(s3Item.Name);
+            //    if (icon != null)
+            //    {
+            //        imageList.Images.Add(s3Item.Extension, icon);
+            //        return s3Item.Extension;
+            //    }
+            //}
+            return "file_default";
         }
 
         private static void ShowMessageBox(Exception? ex)
@@ -108,9 +129,17 @@ namespace Dotkit.YandexObjectStorage.Browser
             createFolderToolStripMenuItem.Text = "Create folder...";
             createFolderToolStripMenuItem.Click += createFolderToolStripMenuItem_Click;
 
-            _deleteFolderToolStripMenuItem = new ToolStripMenuItem();
-            _deleteFolderToolStripMenuItem.Text = "Delete folder";
-            _deleteFolderToolStripMenuItem.Click += deleteFolderToolStripMenuItem_Click;
+            _deleteToolStripMenuItem = new ToolStripMenuItem();
+            _deleteToolStripMenuItem.Text = "Delete";
+            _deleteToolStripMenuItem.Click += deleteToolStripMenuItem_Click;
+
+            _copyToolStripMenuItem = new ToolStripMenuItem();
+            _copyToolStripMenuItem.Text = "Copy";
+            _copyToolStripMenuItem.Click += copyToolStripMenuItem_Click;
+
+            _pasteToolStripMenuItem = new ToolStripMenuItem();
+            _pasteToolStripMenuItem.Text = "Paste";
+            _pasteToolStripMenuItem.Click += pasteToolStripMenuItem_Click;
 
             var refreshToolStripMenuItem = new ToolStripMenuItem();
             refreshToolStripMenuItem.Text = "Refresh";
@@ -120,7 +149,11 @@ namespace Dotkit.YandexObjectStorage.Browser
             treeContextMenu.Items.AddRange(new ToolStripItem[]
             {
                 createFolderToolStripMenuItem,
-                _deleteFolderToolStripMenuItem,
+                new ToolStripSeparator(),
+                _copyToolStripMenuItem,
+                _pasteToolStripMenuItem,
+                new ToolStripSeparator(),
+                _deleteToolStripMenuItem,
                 new ToolStripSeparator(),
                 refreshToolStripMenuItem
             });
@@ -134,17 +167,17 @@ namespace Dotkit.YandexObjectStorage.Browser
             CreateNewFolder?.Invoke(this, EventArgs.Empty);
         }
 
-        private void deleteFolderToolStripMenuItem_Click(object? sender, EventArgs e)
+        private void deleteToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            var folders = new List<YFolderInfo>();
+            var items = new List<IS3FileSystemInfo>();
             foreach (ListViewItem item in _listView.SelectedItems)
             {
-                if (item.Tag is YFolderInfo fi)
+                if (item.Tag is IS3FileSystemInfo si)
                 {
-                    folders.Add(fi);
+                    items.Add(si);
                 }
             }
-            DeleteFolders?.Invoke(this, new FoldersEventArgs(folders.ToArray()));
+            DeleteItems?.Invoke(this, new ItemsEventArgs(items.ToArray()));
         }
 
         private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -154,7 +187,40 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            _deleteFolderToolStripMenuItem!.Enabled = _listView.SelectedItems.Count > 0;
+            _deleteToolStripMenuItem!.Enabled = _listView.SelectedItems.Count > 0;
+            _copyToolStripMenuItem!.Enabled = false;
+            _pasteToolStripMenuItem!.Enabled =
+                _currentFolder != null &&
+                Clipboard.GetFileDropList().Count > 0;
+        }
+
+        private void copyToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+
+        }
+
+        private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            if (_currentFolder == null) return;
+            foreach(var filePath in Clipboard.GetFileDropList())
+            {
+                Utils.DoBackground(
+                    () =>
+                    {
+                        if (!string.IsNullOrEmpty(filePath))
+                        {
+                            _currentFolder.UploadFileAsync(filePath).ConfigureAwait(false).GetAwaiter().GetResult();
+                        }
+                    },
+                    () =>
+                    {
+                        UpdateItems();
+                    },
+                    (ex) =>
+                    {
+                        ShowMessageBox(ex);
+                    });
+            }
         }
     }
 }

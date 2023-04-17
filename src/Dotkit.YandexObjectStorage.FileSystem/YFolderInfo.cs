@@ -9,7 +9,7 @@ namespace Dotkit.YandexObjectStorage.FileSystem
     public sealed class YFolderInfo
     {
         public string BucketName { get; private set; } = null!;
-        public string Key { get; private set; } = null!;
+        public string Key { get; private set; } = string.Empty;
         public string FullPath => $"{BucketName}://{Key}";
         public string Folder => Path.GetDirectoryName(Key.TrimEndPathDelimeter()).NormalizePathDelimeter() ?? string.Empty;
         public string Name => Path.GetFileName(Key.TrimEndPathDelimeter()) ?? string.Empty;
@@ -32,7 +32,7 @@ namespace Dotkit.YandexObjectStorage.FileSystem
             return Key == other.Key;
         }
 
-        internal static YFolderInfo Create(string bucketName, string key)
+        public static YFolderInfo Create(string bucketName, string key)
         {
             return new YFolderInfo { BucketName = bucketName, Key = key };
         }
