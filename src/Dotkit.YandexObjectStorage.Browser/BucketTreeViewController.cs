@@ -31,8 +31,17 @@ namespace Dotkit.YandexObjectStorage.Browser
             _treeView.MouseClick += treeView_MouseClick;
             _treeView.BeforeExpand += treeView_BeforeExpand;
             _treeView.BeforeCollapse += treeView_BeforeCollapse;
+            _treeView.KeyDown += treeView_KeyDown;
             CreateContextMenu();
             _mainForm = mainForm;
+        }
+
+        private void treeView_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                deleteFolderToolStripMenuItem_Click(sender, e);
+            }
         }
 
         public void Attach(ObjectListViewController objectListViewController)
@@ -119,7 +128,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void DeleteFolder(TreeNode node)
         {
-            if (node.Tag is not S3DirectoryInfo fi) return;
+            if (node?.Tag is not S3DirectoryInfo fi) return;
 
             var dlg = new DeleteItemsForm(_service, new[] { fi });
             dlg.ShowDialog(_mainForm);

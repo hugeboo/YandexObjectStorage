@@ -37,7 +37,27 @@ namespace Dotkit.YandexObjectStorage.Browser
             _mainForm = mainForm;
             listView.MouseDoubleClick += ListView_MouseDoubleClick;
             listView.ItemSelectionChanged += ListView_ItemSelectionChanged;
+            listView.KeyDown += ListView_KeyDown;
             CreateContextMenu();
+        }
+
+        private void ListView_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                deleteToolStripMenuItem_Click(sender, e);
+            }
+            else if (e.Control)
+            {
+                if (e.KeyCode == Keys.C)
+                {
+                    copyToolStripMenuItem_Click(sender, e);
+                }
+                else if (e.KeyCode == Keys.V)
+                {
+                    pasteToolStripMenuItem_Click(sender, e);
+                }
+            }
         }
 
         private void ListView_ItemSelectionChanged(object? sender, ListViewItemSelectionChangedEventArgs e)
