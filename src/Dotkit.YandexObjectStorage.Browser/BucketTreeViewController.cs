@@ -130,14 +130,14 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             if (node?.Tag is not S3DirectoryInfo fi) return;
 
-            var dlg = new DeleteItemsForm(_service, new[] { fi });
+            using var dlg = new DeleteItemsForm(_service, new[] { fi });
             dlg.ShowDialog(_mainForm);
             RefreshNode(node.Parent);
         }
 
         private void DeleteItems(TreeNode parentNode, IEnumerable<IS3FileSystemInfo> items)
         {
-            var dlg = new DeleteItemsForm(_service, items);
+            using var dlg = new DeleteItemsForm(_service, items);
             dlg.ShowDialog(_mainForm);
             RefreshNode(parentNode);
         }

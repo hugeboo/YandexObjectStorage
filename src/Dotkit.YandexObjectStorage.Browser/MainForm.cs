@@ -15,10 +15,10 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             _uiState = UIState.Load();
 
-            Program.S3Configuration.ServiceURL = "https://s3.yandexcloud.net";
-            Program.S3Configuration.AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br";
-            Program.S3Configuration.SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N";
-            Program.S3Configuration.BucketName = "test1-sesv";
+            //Program.S3Configuration.ServiceURL = "https://s3.yandexcloud.net";
+            //Program.S3Configuration.AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br";
+            //Program.S3Configuration.SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N";
+            //Program.S3Configuration.BucketName = "test1-sesv";
 
             _service = Program.S3Configuration.CreateService();
             _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView, this);
@@ -110,6 +110,12 @@ namespace Dotkit.YandexObjectStorage.Browser
             {
                 //...
             }
+        }
+
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dlg = new SettingsForm();
+            dlg.ShowDialog();
         }
     }
 }

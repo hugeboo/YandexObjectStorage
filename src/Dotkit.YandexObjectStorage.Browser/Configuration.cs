@@ -12,7 +12,12 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         public const string FileName = "configuration.json";
 
-        public string LocalFileStorageRoot { get; set; } = "c:\\temp\\YOS";
+        public string LocalFileStorageRoot { get; set; } = string.Empty;
+
+        public bool Validate()
+        {
+            return !string.IsNullOrEmpty(LocalFileStorageRoot);
+        }
 
         public void Save()
         {
@@ -115,6 +120,19 @@ namespace Dotkit.YandexObjectStorage.Browser
             }
 
             return c;
+        }
+
+        public static bool Exists(this S3Configuration configuration)
+        {
+            return File.Exists(FileName);
+        }
+
+        public static bool Validate(this S3Configuration configuration)
+        {
+            return !string.IsNullOrEmpty(configuration.SecretAccessKey) &&
+                !string.IsNullOrEmpty(configuration.ServiceURL) &&
+                !string.IsNullOrEmpty(configuration.AccessKeyId) &&
+                !string.IsNullOrEmpty(configuration.BucketName);
         }
 
         public static S3Configuration Clone(this S3Configuration configuraion)
