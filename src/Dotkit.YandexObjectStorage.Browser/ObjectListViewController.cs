@@ -271,7 +271,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             var selected = GetSelectedItems().Cast<S3FileInfo>().Where(it => it != null).ToList();
             if (!selected.Any()) return;
 
-            var root = Path.Combine(Program.Config.LocalFileStorageRoot, Program.Config.S3Configuration.BucketName);
+            var root = Path.Combine(Program.Config.LocalFileStorageRoot, Program.S3Configuration.BucketName);
             if (!Directory.Exists(root)) Directory.CreateDirectory(root);
 
             ShowProgressForm("Downloading files...");

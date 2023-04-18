@@ -206,7 +206,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         private TreeNode CreateFolderNode(S3DirectoryInfo folder)
         {
             var imgKey = string.IsNullOrEmpty(folder.Key) ? "bucket" : "folder";
-            var name = string.IsNullOrEmpty(folder.Key) ? Program.Config.S3Configuration.BucketName : folder.Name;
+            var name = string.IsNullOrEmpty(folder.Key) ? Program.S3Configuration.BucketName : folder.Name;
             var node = new TreeNode(name)
             {
                 Tag = folder,

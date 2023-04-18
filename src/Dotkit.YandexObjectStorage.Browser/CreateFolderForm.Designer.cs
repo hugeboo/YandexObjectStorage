@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CreateFolderForm));
             label1 = new Label();
             textBox = new TextBox();
             okButton = new Button();
@@ -84,6 +85,7 @@
             Controls.Add(textBox);
             Controls.Add(label1);
             DoubleBuffered = true;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "CreateFolderForm";

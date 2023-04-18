@@ -5,10 +5,6 @@ VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dotkit.YandexObjectStorage.Browser", "src\Dotkit.YandexObjectStorage.Browser\Dotkit.YandexObjectStorage.Browser.csproj", "{76E55445-0B45-465D-B456-519596666850}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dotkit.YandexObjectStorage.FileSystem", "src\Dotkit.YandexObjectStorage.FileSystem\Dotkit.YandexObjectStorage.FileSystem.csproj", "{05135E24-D827-46DB-9120-FF21BB311202}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dotkit.YandexObjectStorage.FileSystem.Tests", "tests\Dotkit.YandexObjectStorage.FileSystem.Tests\Dotkit.YandexObjectStorage.FileSystem.Tests.csproj", "{41249B32-266E-4822-91F2-4A588D842BE3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,14 +15,6 @@ Global
 		{76E55445-0B45-465D-B456-519596666850}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76E55445-0B45-465D-B456-519596666850}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{76E55445-0B45-465D-B456-519596666850}.Release|Any CPU.Build.0 = Release|Any CPU
-		{05135E24-D827-46DB-9120-FF21BB311202}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{05135E24-D827-46DB-9120-FF21BB311202}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{05135E24-D827-46DB-9120-FF21BB311202}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{05135E24-D827-46DB-9120-FF21BB311202}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41249B32-266E-4822-91F2-4A588D842BE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41249B32-266E-4822-91F2-4A588D842BE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41249B32-266E-4822-91F2-4A588D842BE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41249B32-266E-4822-91F2-4A588D842BE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

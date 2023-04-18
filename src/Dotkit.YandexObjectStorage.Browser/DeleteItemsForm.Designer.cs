@@ -126,6 +126,7 @@
             Controls.Add(cancelButton);
             Controls.Add(deleteButton);
             DoubleBuffered = true;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "DeleteItemsForm";

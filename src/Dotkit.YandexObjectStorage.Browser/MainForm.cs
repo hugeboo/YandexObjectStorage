@@ -7,20 +7,20 @@ namespace Dotkit.YandexObjectStorage.Browser
         private readonly IS3Service _service;
         private readonly BucketTreeViewController _bucketTreeViewController;
         private readonly ObjectListViewController _objectListViewController;
+        private readonly UIState _uiState;
 
         public MainForm()
         {
             InitializeComponent();
 
-            Program.Config.S3Configuration = new S3Configuration
-            {
-                ServiceURL = "https://s3.yandexcloud.net",
-                AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br",
-                SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N",
-                BucketName = "test1-sesv"
-            };
+            _uiState = UIState.Load();
 
-            _service = Program.Config.S3Configuration.CreateService();
+            Program.S3Configuration.ServiceURL = "https://s3.yandexcloud.net";
+            Program.S3Configuration.AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br";
+            Program.S3Configuration.SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N";
+            Program.S3Configuration.BucketName = "test1-sesv";
+
+            _service = Program.S3Configuration.CreateService();
             _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView, this);
             _objectListViewController = new ObjectListViewController(_service, mainListView, this);
             _bucketTreeViewController.Attach(_objectListViewController);
@@ -55,20 +55,26 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void ApplyConfig()
         {
-            this.Text = $"{this.Text} - {Program.Config.S3Configuration.BucketName}";
-            if (Program.Config.UIState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = Program.Config.UIState.MainSlitterDistance;
-            if (Program.Config.UIState.MainFormWidth > 0 && Program.Config.UIState.MainFormHeight > 0)
-                this.Size = new Size(Program.Config.UIState.MainFormWidth, Program.Config.UIState.MainFormHeight);
+            this.Text = $"{this.Text} - {Program.S3Configuration.BucketName}";
+            if (_uiState.MainFormWidth > 0 && _uiState.MainFormHeight > 0 && _uiState.MainFormX > 0 && _uiState.MainFormY > 0)
+            {
+                this.Bounds = new Rectangle(_uiState.MainFormX, _uiState.MainFormY, _uiState.MainFormWidth, _uiState.MainFormHeight);
+            }
+            if (_uiState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = _uiState.MainSlitterDistance;
         }
 
         public void Lock()
         {
             mainSplitContainer.Enabled = false;
+            fileToolStripMenuItem.Enabled = false;
+            helpToolStripMenuItem.Enabled = false;
         }
 
         public void Unlock()
         {
             mainSplitContainer.Enabled = true;
+            fileToolStripMenuItem.Enabled = true;
+            helpToolStripMenuItem.Enabled = true;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -77,15 +83,33 @@ namespace Dotkit.YandexObjectStorage.Browser
             _bucketTreeViewController.Init();
         }
 
-        private void mainSplitContainer_SplitterMoved(object sender, SplitterEventArgs e)
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Program.Config.UIState.MainSlitterDistance = mainSplitContainer.SplitterDistance;
+            this.Close();
         }
 
-        private void MainForm_Resize(object sender, EventArgs e)
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Program.Config.UIState.MainFormWidth = this.Width;
-            Program.Config.UIState.MainFormHeight = this.Height;
+            var dlg = new AboutBox();
+            dlg.ShowDialog();
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                _uiState.MainFormX = this.Left;
+                _uiState.MainFormY = this.Top;
+                _uiState.MainFormWidth = this.Width;
+                _uiState.MainFormHeight = this.Height;
+                _uiState.MainSlitterDistance = mainSplitContainer.SplitterDistance;
+
+                _uiState.Save();
+            }
+            catch
+            {
+                //...
+            }
         }
     }
 }

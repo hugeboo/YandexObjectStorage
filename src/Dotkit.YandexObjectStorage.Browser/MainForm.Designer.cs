@@ -32,6 +32,10 @@
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             mainMenuStrip = new MenuStrip();
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            exitToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
             mainToolStrip = new ToolStrip();
             mainStatusStrip = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
@@ -43,6 +47,7 @@
             mainListView = new ListView();
             listLargeImageList = new ImageList(components);
             listSmallImageList = new ImageList(components);
+            mainMenuStrip.SuspendLayout();
             mainStatusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)mainSplitContainer).BeginInit();
             mainSplitContainer.Panel1.SuspendLayout();
@@ -53,17 +58,46 @@
             // mainMenuStrip
             // 
             mainMenuStrip.ImageScalingSize = new Size(20, 20);
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Padding = new Padding(5, 2, 0, 2);
-            mainMenuStrip.Size = new Size(908, 24);
+            mainMenuStrip.Size = new Size(908, 28);
             mainMenuStrip.TabIndex = 0;
             mainMenuStrip.Text = "menuStrip1";
+            // 
+            // fileToolStripMenuItem
+            // 
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { exitToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(46, 24);
+            fileToolStripMenuItem.Text = "File";
+            // 
+            // exitToolStripMenuItem
+            // 
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            exitToolStripMenuItem.Size = new Size(116, 26);
+            exitToolStripMenuItem.Text = "Exit";
+            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(55, 24);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // aboutToolStripMenuItem
+            // 
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new Size(142, 26);
+            aboutToolStripMenuItem.Text = "About...";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // mainToolStrip
             // 
             mainToolStrip.ImageScalingSize = new Size(20, 20);
-            mainToolStrip.Location = new Point(0, 24);
+            mainToolStrip.Location = new Point(0, 28);
             mainToolStrip.Name = "mainToolStrip";
             mainToolStrip.Size = new Size(908, 25);
             mainToolStrip.TabIndex = 1;
@@ -101,7 +135,7 @@
             // 
             mainSplitContainer.Dock = DockStyle.Fill;
             mainSplitContainer.FixedPanel = FixedPanel.Panel1;
-            mainSplitContainer.Location = new Point(0, 49);
+            mainSplitContainer.Location = new Point(0, 53);
             mainSplitContainer.Name = "mainSplitContainer";
             // 
             // mainSplitContainer.Panel1
@@ -111,10 +145,9 @@
             // mainSplitContainer.Panel2
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
-            mainSplitContainer.Size = new Size(908, 411);
+            mainSplitContainer.Size = new Size(908, 407);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
-            mainSplitContainer.SplitterMoved += mainSplitContainer_SplitterMoved;
             // 
             // mainTreeView
             // 
@@ -126,7 +159,7 @@
             mainTreeView.Location = new Point(0, 0);
             mainTreeView.Name = "mainTreeView";
             mainTreeView.SelectedImageIndex = 0;
-            mainTreeView.Size = new Size(249, 411);
+            mainTreeView.Size = new Size(249, 407);
             mainTreeView.TabIndex = 0;
             // 
             // treeImageList
@@ -147,7 +180,7 @@
             mainListView.Location = new Point(0, 0);
             mainListView.Name = "mainListView";
             mainListView.ShowItemToolTips = true;
-            mainListView.Size = new Size(655, 411);
+            mainListView.Size = new Size(655, 407);
             mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
@@ -178,12 +211,14 @@
             Controls.Add(mainToolStrip);
             Controls.Add(mainMenuStrip);
             DoubleBuffered = true;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = mainMenuStrip;
             Name = "MainForm";
-            StartPosition = FormStartPosition.CenterScreen;
             Text = "Yandex Object Storage";
+            FormClosing += MainForm_FormClosing;
             Load += MainForm_Load;
-            Resize += MainForm_Resize;
+            mainMenuStrip.ResumeLayout(false);
+            mainMenuStrip.PerformLayout();
             mainStatusStrip.ResumeLayout(false);
             mainStatusStrip.PerformLayout();
             mainSplitContainer.Panel1.ResumeLayout(false);
@@ -208,5 +243,9 @@
         private ToolStripStatusLabel toolStripStatusLabel1;
         private ToolStripStatusLabel toolStripStatusLabel2;
         private ToolStripStatusLabel toolStripStatusLabel3;
+        private ToolStripMenuItem fileToolStripMenuItem;
+        private ToolStripMenuItem exitToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem aboutToolStripMenuItem;
     }
 }
