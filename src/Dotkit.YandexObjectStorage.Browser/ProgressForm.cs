@@ -12,6 +12,8 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     public partial class ProgressForm : Form
     {
+        private MainForm? _mainForm;
+
         public string Message
         {
             get => label1.Text;
@@ -21,6 +23,28 @@ namespace Dotkit.YandexObjectStorage.Browser
         public ProgressForm()
         {
             InitializeComponent();
+        }
+
+        public void ShowEx(MainForm mainForm)
+        {
+            _mainForm = mainForm;
+            _mainForm.Lock();
+
+            this.Show(mainForm);
+            SetLocation();
+        }
+
+        private void SetLocation()
+        {
+            if (_mainForm == null) return;
+            this.Location = new Point(
+                _mainForm.Left + (_mainForm.Width - this.Width) / 2,
+                _mainForm.Top + (_mainForm.Height - this.Height) / 2);
+        }
+
+        private void ProgressForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _mainForm?.Unlock();
         }
     }
 }

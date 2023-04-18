@@ -62,6 +62,7 @@
             Name = "ProgressForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "Progress";
+            FormClosing += ProgressForm_FormClosing;
             ResumeLayout(false);
             PerformLayout();
         }

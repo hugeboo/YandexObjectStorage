@@ -21,7 +21,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             };
 
             _service = Program.Config.S3Configuration.CreateService();
-            _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView);
+            _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView, this);
             _objectListViewController = new ObjectListViewController(_service, mainListView, this);
             _bucketTreeViewController.Attach(_objectListViewController);
             _objectListViewController.Attach(_bucketTreeViewController);
@@ -59,6 +59,16 @@ namespace Dotkit.YandexObjectStorage.Browser
             if (Program.Config.UIState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = Program.Config.UIState.MainSlitterDistance;
             if (Program.Config.UIState.MainFormWidth > 0 && Program.Config.UIState.MainFormHeight > 0)
                 this.Size = new Size(Program.Config.UIState.MainFormWidth, Program.Config.UIState.MainFormHeight);
+        }
+
+        public void Lock()
+        {
+            mainSplitContainer.Enabled = false;
+        }
+
+        public void Unlock()
+        {
+            mainSplitContainer.Enabled = true;
         }
 
         private void MainForm_Load(object sender, EventArgs e)

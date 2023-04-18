@@ -14,7 +14,7 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly IS3Service _service;
         private readonly ListView _listView;
-        private readonly Form _mainForm;
+        private readonly MainForm _mainForm;
 
         private ToolStripMenuItem? _deleteToolStripMenuItem;
         private ToolStripMenuItem? _copyToolStripMenuItem;
@@ -22,6 +22,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         private ToolStripMenuItem? _downloadToolStripMenuItem;
 
         private S3DirectoryInfo? _currentFolder;
+        private ProgressForm? _progressForm;
 
         public event EventHandler<FolderEventArgs>? FolderDoubleClick;
         public event EventHandler? CreateNewFolder;
@@ -29,7 +30,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? Refresh;
         public event EventHandler<ItemsEventArgs>? SelectedChanged;
 
-        public ObjectListViewController(IS3Service service, ListView listView, Form mainForm)
+        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm)
         {
             _service = service;
             _listView = listView;
@@ -149,7 +150,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             createFolderToolStripMenuItem.Click += createFolderToolStripMenuItem_Click;
 
             _deleteToolStripMenuItem = new ToolStripMenuItem();
-            _deleteToolStripMenuItem.Text = "Delete";
+            _deleteToolStripMenuItem.Text = "Delete...";
             _deleteToolStripMenuItem.Click += deleteToolStripMenuItem_Click;
 
             _copyToolStripMenuItem = new ToolStripMenuItem();
@@ -253,7 +254,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             var root = Path.Combine(Program.Config.LocalFileStorageRoot, Program.Config.S3Configuration.BucketName);
             if (!Directory.Exists(root)) Directory.CreateDirectory(root);
 
-            var progress = ShowProgressDialog("Downloading files...");
+            ShowProgressForm("Downloading files...");
             try
             {
                 Utils.DoBackground(
@@ -271,34 +272,36 @@ namespace Dotkit.YandexObjectStorage.Browser
                     },
                     (lstFiles) =>
                     {
-                        progress.Close();
+                        HideProgressForm();
                         actionWithDownloadedFiles?.Invoke(lstFiles);
                     },
                     (ex) =>
                     {
-                        progress.Close();
+                        HideProgressForm();
                         ShowMessageBox(ex);
                     });
             }
             catch (Exception ex)
             {
-                progress.Close();
+                HideProgressForm();
                 ShowMessageBox(ex);
             }
         }
 
-        private ProgressForm ShowProgressDialog(string message)
+        private void ShowProgressForm(string message)
         {
-            var progress = new ProgressForm
+            if (_progressForm != null) HideProgressForm();
+            _progressForm = new ProgressForm
             {
                 Message = message
             };
-            progress.Show();
-            progress.Location = new Point(
-                _mainForm.Left + (_mainForm.Width - progress.Width) / 2,
-                _mainForm.Top + (_mainForm.Height - progress.Height) / 2);
+            _progressForm.ShowEx(_mainForm);
+        }
 
-            return progress;
+        private void HideProgressForm()
+        {
+            _progressForm?.Close();
+            _progressForm = null;
         }
 
         private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -315,7 +318,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             if (_currentFolder == null) return;
 
-            var progress = ShowProgressDialog("Uploading file...");
+            ShowProgressForm("Uploading file...");
             try
             {
                 Utils.DoBackground(
@@ -328,19 +331,19 @@ namespace Dotkit.YandexObjectStorage.Browser
                    },
                    () =>
                    {
-                       progress.Close();
+                       HideProgressForm();
                        UpdateItems();
                    },
                    (ex) =>
                    {
-                       progress.Close();
+                       HideProgressForm();
                        ShowMessageBox(ex);
                        UpdateItems();
                    });
             }
             catch (Exception ex)
             {
-                progress.Close();
+                HideProgressForm();
                 ShowMessageBox(ex);
                 UpdateItems();
             }

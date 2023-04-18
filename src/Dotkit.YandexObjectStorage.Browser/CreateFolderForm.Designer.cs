@@ -39,9 +39,9 @@
             label1.AutoSize = true;
             label1.Location = new Point(12, 21);
             label1.Name = "label1";
-            label1.Size = new Size(174, 20);
+            label1.Size = new Size(193, 20);
             label1.TabIndex = 0;
-            label1.Text = "Please enter folder name";
+            label1.Text = "Please enter directory name";
             // 
             // textBox
             // 
@@ -88,7 +88,7 @@
             MinimizeBox = false;
             Name = "CreateFolderForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Create Folder";
+            Text = "Create Directory";
             ResumeLayout(false);
             PerformLayout();
         }

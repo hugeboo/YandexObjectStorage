@@ -73,29 +73,29 @@
             // 
             mainStatusStrip.ImageScalingSize = new Size(20, 20);
             mainStatusStrip.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2, toolStripStatusLabel3 });
-            mainStatusStrip.Location = new Point(0, 458);
+            mainStatusStrip.Location = new Point(0, 460);
             mainStatusStrip.Name = "mainStatusStrip";
             mainStatusStrip.Padding = new Padding(1, 0, 12, 0);
-            mainStatusStrip.Size = new Size(908, 24);
+            mainStatusStrip.Size = new Size(908, 22);
             mainStatusStrip.TabIndex = 2;
             mainStatusStrip.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new Size(856, 18);
+            toolStripStatusLabel1.Size = new Size(895, 16);
             toolStripStatusLabel1.Spring = true;
             toolStripStatusLabel1.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // toolStripStatusLabel2
             // 
             toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            toolStripStatusLabel2.Size = new Size(0, 18);
+            toolStripStatusLabel2.Size = new Size(0, 16);
             // 
             // toolStripStatusLabel3
             // 
             toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            toolStripStatusLabel3.Size = new Size(0, 18);
+            toolStripStatusLabel3.Size = new Size(0, 16);
             // 
             // mainSplitContainer
             // 
@@ -111,7 +111,7 @@
             // mainSplitContainer.Panel2
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
-            mainSplitContainer.Size = new Size(908, 409);
+            mainSplitContainer.Size = new Size(908, 411);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
             mainSplitContainer.SplitterMoved += mainSplitContainer_SplitterMoved;
@@ -126,7 +126,7 @@
             mainTreeView.Location = new Point(0, 0);
             mainTreeView.Name = "mainTreeView";
             mainTreeView.SelectedImageIndex = 0;
-            mainTreeView.Size = new Size(249, 409);
+            mainTreeView.Size = new Size(249, 411);
             mainTreeView.TabIndex = 0;
             // 
             // treeImageList
@@ -147,7 +147,7 @@
             mainListView.Location = new Point(0, 0);
             mainListView.Name = "mainListView";
             mainListView.ShowItemToolTips = true;
-            mainListView.Size = new Size(655, 409);
+            mainListView.Size = new Size(655, 411);
             mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;

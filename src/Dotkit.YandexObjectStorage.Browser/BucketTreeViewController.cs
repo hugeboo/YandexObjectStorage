@@ -12,6 +12,7 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly IS3Service _service;
         private readonly TreeView _treeView;
+        private readonly MainForm _mainForm;
         private readonly HashSet<TreeNode> _initializedNodes = new();
         private readonly Dictionary<string, TreeNode> _nodeByFolderKey = new();
 
@@ -21,15 +22,17 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? EmptySelectedChanged;
         public event EventHandler<FolderEventArgs>? FolderSelectedChanged;
 
-        public BucketTreeViewController(IS3Service service, TreeView treeView)
+        public BucketTreeViewController(IS3Service service, TreeView treeView, MainForm mainForm)
         {
             _service = service;
             _treeView = treeView;
+            _mainForm = mainForm;
             _treeView.AfterSelect += treeView_AfterSelect;
             _treeView.MouseClick += treeView_MouseClick;
             _treeView.BeforeExpand += treeView_BeforeExpand;
             _treeView.BeforeCollapse += treeView_BeforeCollapse;
             CreateContextMenu();
+            _mainForm = mainForm;
         }
 
         public void Attach(ObjectListViewController objectListViewController)
@@ -118,47 +121,16 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             if (node.Tag is not S3DirectoryInfo fi) return;
 
-            if (MessageBox.Show($"Do you really want to delete '{node.Text}' ?", "Delete Folder", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
-                == DialogResult.OK)
-            {
-                Utils.DoBackground(
-                    () =>
-                    {
-                        fi.DeleteAsync(true).ConfigureAwait(false).GetAwaiter().GetResult();
-                    },
-                    () =>
-                    {
-                        RefreshNode(node.Parent);
-                    },
-                    (ex) =>
-                    {
-                        ShowMessageBox(ex);
-                    });
-            }
+            var dlg = new DeleteItemsForm(_service, new[] { fi });
+            dlg.ShowDialog(_mainForm);
+            RefreshNode(node.Parent);
         }
 
         private void DeleteItems(TreeNode parentNode, IEnumerable<IS3FileSystemInfo> items)
         {
-            if (MessageBox.Show($"Do you really want to delete {items.Count()} items?", "Delete Items", MessageBoxButtons.OKCancel, MessageBoxIcon.Question)
-                == DialogResult.OK)
-            {
-                Utils.DoBackground(
-                    () =>
-                    {
-                        foreach(var item in items)
-                        {
-                            item.DeleteAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                        }
-                    },
-                    () =>
-                    {
-                        RefreshNode(parentNode);
-                    },
-                    (ex) =>
-                    {
-                        ShowMessageBox(ex);
-                    });
-            }
+            var dlg = new DeleteItemsForm(_service, items);
+            dlg.ShowDialog(_mainForm);
+            RefreshNode(parentNode);
         }
 
         private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -169,6 +141,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         private void RefreshNode(TreeNode? node)
         {
             if (node == null) return;
+            _treeView.Cursor = Cursors.WaitCursor;
             Utils.DoBackground(
                () =>
                {
@@ -183,6 +156,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                },
                (lstFolder) =>
                {
+                   _treeView.Cursor = Cursors.Default;
                    node.Nodes.Clear();
                    var nodes = lstFolder.Select(CreateFolderNode).ToArray();
                    node.Nodes.AddRange(nodes);
@@ -191,6 +165,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                },
                (ex) =>
                {
+                   _treeView.Cursor = Cursors.Default;
                    ShowMessageBox(ex);
                });
         }
@@ -214,30 +189,20 @@ namespace Dotkit.YandexObjectStorage.Browser
         public void Init()
         {
             _treeView.Nodes.Clear();
-            Utils.DoBackground(
-                () => 
-                {
-                    return _service.Root.GetDirectories().ConfigureAwait(false).GetAwaiter().GetResult();
-                }, 
-                (lstFolders) => 
-                {
-                    var nodes = lstFolders.Select(CreateFolderNode).ToArray();
-                    _treeView.Nodes.AddRange(nodes);
-                    _treeView.SelectedNode = nodes.FirstOrDefault();
-                }, 
-                (ex) => 
-                {
-                    ShowMessageBox(ex);
-                });
+            var rootNode = CreateFolderNode(_service.Root);
+            _treeView.Nodes.Add(rootNode);
+            _treeView.SelectedNode = rootNode;
         }
 
         private TreeNode CreateFolderNode(S3DirectoryInfo folder)
         {
-            var node = new TreeNode(folder.Name)
+            var imgKey = string.IsNullOrEmpty(folder.Key) ? "bucket" : "folder";
+            var name = string.IsNullOrEmpty(folder.Key) ? Program.Config.S3Configuration.BucketName : folder.Name;
+            var node = new TreeNode(name)
             {
                 Tag = folder,
-                ImageKey = "folder",
-                SelectedImageKey = "folder"
+                ImageKey = imgKey,
+                SelectedImageKey = imgKey
             };
             node.Nodes.Add(new TreeNode());
             _nodeByFolderKey[folder.FullName] = node;
@@ -288,10 +253,11 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeView_BeforeCollapse(object? sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node?.Tag is S3DirectoryInfo)
+            if (e.Node?.Tag is S3DirectoryInfo di)
             {
-                e.Node.ImageKey = "folder";
-                e.Node.SelectedImageKey = "folder";
+                var imgKey = string.IsNullOrEmpty(di.Key) ? "bucket" : "folder";
+                e.Node.ImageKey = imgKey;
+                e.Node.SelectedImageKey = imgKey;
             }
         }
 
@@ -302,10 +268,11 @@ namespace Dotkit.YandexObjectStorage.Browser
                 RefreshNode(e.Node);
             }
 
-            if (e.Node?.Tag is S3DirectoryInfo)
+            if (e.Node?.Tag is S3DirectoryInfo di)
             {
-                e.Node.ImageKey = "open_folder";
-                e.Node.SelectedImageKey = "open_folder";
+                var imgKey = string.IsNullOrEmpty(di.Key) ? "bucket" : "open_folder";
+                e.Node.ImageKey = imgKey;
+                e.Node.SelectedImageKey = imgKey;
             }
         }
     }
