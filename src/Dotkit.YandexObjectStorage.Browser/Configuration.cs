@@ -11,6 +11,7 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         public S3Configuration S3Configuration { get; set; } = new S3Configuration();
         public UIState UIState { get; set; } = new UIState();
+        public string LocalFileStorageRoot { get; set; } = "c:\\temp\\YOS";
     }
 
     internal class UIState

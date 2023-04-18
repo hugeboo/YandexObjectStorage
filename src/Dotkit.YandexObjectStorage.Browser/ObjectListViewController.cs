@@ -1,6 +1,7 @@
 ﻿using Dotkit.S3;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Security.Cryptography;
@@ -13,11 +14,12 @@ namespace Dotkit.YandexObjectStorage.Browser
     {
         private readonly IS3Service _service;
         private readonly ListView _listView;
-        private readonly MainForm _mainForm;
+        private readonly Form _mainForm;
 
         private ToolStripMenuItem? _deleteToolStripMenuItem;
         private ToolStripMenuItem? _copyToolStripMenuItem;
         private ToolStripMenuItem? _pasteToolStripMenuItem;
+        private ToolStripMenuItem? _downloadToolStripMenuItem;
 
         private S3DirectoryInfo? _currentFolder;
 
@@ -27,7 +29,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? Refresh;
         public event EventHandler<ItemsEventArgs>? SelectedChanged;
 
-        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm)
+        public ObjectListViewController(IS3Service service, ListView listView, Form mainForm)
         {
             _service = service;
             _listView = listView;
@@ -44,14 +46,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void FireSelectedChanged()
         {
-            var items = new List<IS3FileSystemInfo>();
-            foreach (ListViewItem item in _listView.SelectedItems)
-            {
-                if (item.Tag is IS3FileSystemInfo si)
-                {
-                    items.Add(si);
-                }
-            }
+            var items = GetSelectedItems();
             SelectedChanged?.Invoke(this, new ItemsEventArgs(items.ToArray()));
         }
 
@@ -165,6 +160,10 @@ namespace Dotkit.YandexObjectStorage.Browser
             _pasteToolStripMenuItem.Text = "Paste";
             _pasteToolStripMenuItem.Click += pasteToolStripMenuItem_Click;
 
+            _downloadToolStripMenuItem = new ToolStripMenuItem();
+            _downloadToolStripMenuItem.Text = "Download";
+            _downloadToolStripMenuItem.Click += downloadToolStripMenuItem_Click;
+
             var refreshToolStripMenuItem = new ToolStripMenuItem();
             refreshToolStripMenuItem.Text = "Refresh";
             refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
@@ -173,6 +172,8 @@ namespace Dotkit.YandexObjectStorage.Browser
             treeContextMenu.Items.AddRange(new ToolStripItem[]
             {
                 createFolderToolStripMenuItem,
+                new ToolStripSeparator(),
+                _downloadToolStripMenuItem,
                 new ToolStripSeparator(),
                 _copyToolStripMenuItem,
                 _pasteToolStripMenuItem,
@@ -193,14 +194,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void deleteToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            var items = new List<IS3FileSystemInfo>();
-            foreach (ListViewItem item in _listView.SelectedItems)
-            {
-                if (item.Tag is IS3FileSystemInfo si)
-                {
-                    items.Add(si);
-                }
-            }
+            var items = GetSelectedItems();
             DeleteItems?.Invoke(this, new ItemsEventArgs(items.ToArray()));
         }
 
@@ -211,19 +205,89 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
+            var selected = GetSelectedItems();
             _deleteToolStripMenuItem!.Enabled = _listView.SelectedItems.Count > 0;
-            _copyToolStripMenuItem!.Enabled = false;
+            _copyToolStripMenuItem!.Enabled = selected.Any() && selected.All(it => it.Type == FileSystemType.File);
+            _downloadToolStripMenuItem!.Enabled = _copyToolStripMenuItem!.Enabled;
             _pasteToolStripMenuItem!.Enabled =
                 _currentFolder != null &&
                 Clipboard.GetFileDropList().Count > 0;
         }
 
-        private void copyToolStripMenuItem_Click(object? sender, EventArgs e)
+        private List<IS3FileSystemInfo> GetSelectedItems()
         {
-
+            var items = new List<IS3FileSystemInfo>();
+            foreach (ListViewItem item in _listView.SelectedItems)
+            {
+                if (item.Tag is IS3FileSystemInfo si)
+                {
+                    items.Add(si);
+                }
+            }
+            return items;
         }
 
-        private ProgressForm ShowProgress(string message)
+        private void downloadToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            DownloadSelectedFiles(null);
+        }
+
+        private void copyToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            DownloadSelectedFiles((files) =>
+            {
+                if (files.Any())
+                {
+                    var sc = new StringCollection();
+                    sc.AddRange(files.ToArray());
+                    Clipboard.SetFileDropList(sc);
+                }
+            });
+        }
+
+        private void DownloadSelectedFiles(Action<List<string>>? actionWithDownloadedFiles)
+        {
+            var selected = GetSelectedItems().Cast<S3FileInfo>().Where(it => it != null).ToList();
+            if (!selected.Any()) return;
+
+            var root = Path.Combine(Program.Config.LocalFileStorageRoot, Program.Config.S3Configuration.BucketName);
+            if (!Directory.Exists(root)) Directory.CreateDirectory(root);
+
+            var progress = ShowProgressDialog("Downloading files...");
+            try
+            {
+                Utils.DoBackground(
+                    () =>
+                    {
+                        var lstFiles = new List<string>();
+                        foreach (var fi in selected)
+                        {
+                            var dir = Path.Combine(root, fi.Directory.Key);
+                            var localFilePath = Path.Combine(dir, fi.Name);
+                            fi.DownloadAsync(localFilePath).ConfigureAwait(false).GetAwaiter().GetResult();
+                            lstFiles.Add(localFilePath);
+                        }
+                        return lstFiles;
+                    },
+                    (lstFiles) =>
+                    {
+                        progress.Close();
+                        actionWithDownloadedFiles?.Invoke(lstFiles);
+                    },
+                    (ex) =>
+                    {
+                        progress.Close();
+                        ShowMessageBox(ex);
+                    });
+            }
+            catch (Exception ex)
+            {
+                progress.Close();
+                ShowMessageBox(ex);
+            }
+        }
+
+        private ProgressForm ShowProgressDialog(string message)
         {
             var progress = new ProgressForm
             {
@@ -239,30 +303,46 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            if (_currentFolder == null) return;
-
-            var progress = ShowProgress("Uploading file...");
-
+            var lstFiles = new List<string>();
             foreach(var filePath in Clipboard.GetFileDropList())
             {
+                if (!string.IsNullOrEmpty(filePath)) lstFiles.Add(filePath);
+            }
+            UploadFiles(lstFiles);
+        }
+
+        private void UploadFiles(IEnumerable<string> filePaths)
+        {
+            if (_currentFolder == null) return;
+
+            var progress = ShowProgressDialog("Uploading file...");
+            try
+            {
                 Utils.DoBackground(
-                    () =>
-                    {
-                        if (!string.IsNullOrEmpty(filePath))
-                        {
-                            _currentFolder.UploadFileAsync(filePath).ConfigureAwait(false).GetAwaiter().GetResult();
-                        }
-                    },
-                    () =>
-                    {
-                        progress.Close();
-                        UpdateItems();
-                    },
-                    (ex) =>
-                    {
-                        progress.Close();
-                        ShowMessageBox(ex);
-                    });
+                   () =>
+                   {
+                       foreach (var filePath in filePaths)
+                       {
+                           _currentFolder.UploadFileAsync(filePath).ConfigureAwait(false).GetAwaiter().GetResult();
+                       }
+                   },
+                   () =>
+                   {
+                       progress.Close();
+                       UpdateItems();
+                   },
+                   (ex) =>
+                   {
+                       progress.Close();
+                       ShowMessageBox(ex);
+                       UpdateItems();
+                   });
+            }
+            catch (Exception ex)
+            {
+                progress.Close();
+                ShowMessageBox(ex);
+                UpdateItems();
             }
         }
     }
