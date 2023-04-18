@@ -1,34 +1,80 @@
+using Dotkit.S3;
+
 namespace Dotkit.YandexObjectStorage.Browser
 {
     public partial class MainForm : Form
     {
-        private readonly YOSClient _yosClient;
+        private readonly IS3Service _service;
         private readonly BucketTreeViewController _bucketTreeViewController;
         private readonly ObjectListViewController _objectListViewController;
+        private readonly UIState _uiState;
 
         public MainForm()
         {
             InitializeComponent();
 
-            _yosClient = new YOSClient(Program.Config.YOSConfig);
-            _bucketTreeViewController = new BucketTreeViewController(_yosClient, mainTreeView);
-            _objectListViewController = new ObjectListViewController(_yosClient, mainListView);
+            _uiState = UIState.Load();
+
+            //Program.S3Configuration.ServiceURL = "https://s3.yandexcloud.net";
+            //Program.S3Configuration.AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br";
+            //Program.S3Configuration.SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N";
+            //Program.S3Configuration.BucketName = "test1-sesv";
+
+            _service = Program.S3Configuration.CreateService();
+            _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView, this);
+            _objectListViewController = new ObjectListViewController(_service, mainListView, this);
             _bucketTreeViewController.Attach(_objectListViewController);
             _objectListViewController.Attach(_bucketTreeViewController);
 
-            //var client = new YOSClient(new YOSConfig());
-            //var buckets = client.GetBuckets().Result;
-            //var folders = client.GetFolders(buckets[0].Name!).Result;
-            //var objects = client.GetObjects(buckets[0].Name!, "").Result;
-            //var filePath = client.DownloadObject(buckets[0].Name!, objects[0].Key!, "c:\\temp").Result;
+            _objectListViewController.SelectedChanged += objectListViewController_SelectedChanged;
+        }
+
+        private void objectListViewController_SelectedChanged(object? sender, ItemsEventArgs e)
+        {
+            if (e.Items.Length != 1)
+            {
+                toolStripStatusLabel1.Text = string.Empty;
+                toolStripStatusLabel2.Text = string.Empty;
+                toolStripStatusLabel3.Text = string.Empty;
+            }
+            else
+            {
+                toolStripStatusLabel3.Text = e.Items[0].LastModifiedTime.ToString(" HH:mm:ss dd.MM.yyyy");
+                if (e.Items[0].Type == FileSystemType.Directory)
+                {
+                    toolStripStatusLabel1.Text = $"Directory: {e.Items[0].Name}";
+                    toolStripStatusLabel2.Text = string.Empty;
+                }
+                else if (e.Items[0] is S3FileInfo fi)
+                {
+                    toolStripStatusLabel1.Text = $"File: {fi.Name}";
+                    toolStripStatusLabel2.Text = FileSizeFormatter.FormatSize(fi.Length);
+                }
+            }
         }
 
         private void ApplyConfig()
         {
-            this.Text = $"{this.Text} - {Program.Config.YOSConfig.ServiceURL}";
-            if (Program.Config.UIState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = Program.Config.UIState.MainSlitterDistance;
-            if (Program.Config.UIState.MainFormWidth > 0 && Program.Config.UIState.MainFormHeight > 0)
-                this.Size = new Size(Program.Config.UIState.MainFormWidth, Program.Config.UIState.MainFormHeight);
+            this.Text = $"{this.Text} - {Program.S3Configuration.BucketName}";
+            if (_uiState.MainFormWidth > 0 && _uiState.MainFormHeight > 0 && _uiState.MainFormX > 0 && _uiState.MainFormY > 0)
+            {
+                this.Bounds = new Rectangle(_uiState.MainFormX, _uiState.MainFormY, _uiState.MainFormWidth, _uiState.MainFormHeight);
+            }
+            if (_uiState.MainSlitterDistance > 0) mainSplitContainer.SplitterDistance = _uiState.MainSlitterDistance;
+        }
+
+        public void Lock()
+        {
+            mainSplitContainer.Enabled = false;
+            fileToolStripMenuItem.Enabled = false;
+            helpToolStripMenuItem.Enabled = false;
+        }
+
+        public void Unlock()
+        {
+            mainSplitContainer.Enabled = true;
+            fileToolStripMenuItem.Enabled = true;
+            helpToolStripMenuItem.Enabled = true;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -37,15 +83,39 @@ namespace Dotkit.YandexObjectStorage.Browser
             _bucketTreeViewController.Init();
         }
 
-        private void mainSplitContainer_SplitterMoved(object sender, SplitterEventArgs e)
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Program.Config.UIState.MainSlitterDistance = mainSplitContainer.SplitterDistance;
+            this.Close();
         }
 
-        private void MainForm_Resize(object sender, EventArgs e)
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Program.Config.UIState.MainFormWidth = this.Width;
-            Program.Config.UIState.MainFormHeight = this.Height;
+            var dlg = new AboutBox();
+            dlg.ShowDialog();
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                _uiState.MainFormX = this.Left;
+                _uiState.MainFormY = this.Top;
+                _uiState.MainFormWidth = this.Width;
+                _uiState.MainFormHeight = this.Height;
+                _uiState.MainSlitterDistance = mainSplitContainer.SplitterDistance;
+
+                _uiState.Save();
+            }
+            catch
+            {
+                //...
+            }
+        }
+
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dlg = new SettingsForm();
+            dlg.ShowDialog();
         }
     }
 }

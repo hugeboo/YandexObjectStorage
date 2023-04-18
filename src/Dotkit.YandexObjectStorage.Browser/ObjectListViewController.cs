@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Dotkit.S3;
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics.Tracing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,56 +12,370 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class ObjectListViewController
     {
-        private readonly YOSClient _yosClient;
+        private readonly IS3Service _service;
         private readonly ListView _listView;
-        private BucketTreeViewController? _bucketTreeViewController;
+        private readonly MainForm _mainForm;
 
-        public ObjectListViewController(YOSClient yosClient, ListView listView)
+        private ToolStripMenuItem? _deleteToolStripMenuItem;
+        private ToolStripMenuItem? _copyToolStripMenuItem;
+        private ToolStripMenuItem? _pasteToolStripMenuItem;
+        private ToolStripMenuItem? _downloadToolStripMenuItem;
+
+        private S3DirectoryInfo? _currentFolder;
+        private ProgressForm? _progressForm;
+
+        public event EventHandler<FolderEventArgs>? FolderDoubleClick;
+        public event EventHandler? CreateNewFolder;
+        public event EventHandler<ItemsEventArgs>? DeleteItems;
+        public event EventHandler? Refresh;
+        public event EventHandler<ItemsEventArgs>? SelectedChanged;
+
+        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm)
         {
-            _yosClient = yosClient;
+            _service = service;
             _listView = listView;
+            _mainForm = mainForm;
+            listView.MouseDoubleClick += ListView_MouseDoubleClick;
+            listView.ItemSelectionChanged += ListView_ItemSelectionChanged;
+            listView.KeyDown += ListView_KeyDown;
+            CreateContextMenu();
+        }
 
+        private void ListView_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                deleteToolStripMenuItem_Click(sender, e);
+            }
+            else if (e.Control)
+            {
+                if (e.KeyCode == Keys.C)
+                {
+                    copyToolStripMenuItem_Click(sender, e);
+                }
+                else if (e.KeyCode == Keys.V)
+                {
+                    pasteToolStripMenuItem_Click(sender, e);
+                }
+            }
+        }
+
+        private void ListView_ItemSelectionChanged(object? sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            FireSelectedChanged();
+        }
+
+        private void FireSelectedChanged()
+        {
+            var items = GetSelectedItems();
+            SelectedChanged?.Invoke(this, new ItemsEventArgs(items.ToArray()));
+        }
+
+        private void ListView_MouseDoubleClick(object? sender, MouseEventArgs e)
+        {
+            var ht = _listView.HitTest(e.Location);
+            if (ht.Item != null)
+            {
+                if (ht.Item.Tag is S3DirectoryInfo fi)
+                {
+                    FolderDoubleClick?.Invoke(this, new FolderEventArgs(fi));
+                }
+            }
         }
 
         public void Attach(BucketTreeViewController bucketTreeViewController)
         {
-            _bucketTreeViewController = bucketTreeViewController;
-            _bucketTreeViewController.ItemSelectedChanged += bucketTreeViewController_ItemSelectedChanged;
+            bucketTreeViewController.FolderSelectedChanged += BucketTreeViewController_FolderSelectedChanged;
+            bucketTreeViewController.EmptySelectedChanged += BucketTreeViewController_EmptySelectedChanged;
         }
 
-        private ListViewItem CreateFolderItem(YOSFolder folder)
+        private void BucketTreeViewController_EmptySelectedChanged(object? sender, EventArgs e)
         {
-            return new ListViewItem(folder.Name, "folder");
+            _currentFolder = null;
+            UpdateItems();
         }
 
-        private void bucketTreeViewController_ItemSelectedChanged(object? sender, ItemSelectedChangedEventArgs e)
+        private void BucketTreeViewController_FolderSelectedChanged(object? sender, FolderEventArgs e)
         {
+            _currentFolder = e.Folder;
+            UpdateItems();
+        }
+
+        private void UpdateItems()
+        {
+            if (_currentFolder == null)
+            {
+                _listView.Items.Clear();
+                FireSelectedChanged();
+                return;
+            }
+
             Utils.DoBackground(
                 () =>
                 {
-                    if (e.IsBucket)
-                    {
-                        return _yosClient.GetFolders(e.Bucket!.Name).GetAwaiter().GetResult();
-                    }
-                    else if (e.IsFolder)
-                    {
-                        return _yosClient.GetFolders(e.Folder!).GetAwaiter().GetResult();
-                    }
-                    else
-                    {
-                        return new List<YOSFolder>();
-                    }
+                    var lstFiles = _currentFolder.GetItems().ConfigureAwait(false).GetAwaiter().GetResult();
+                    return lstFiles;
                 },
-                (lstFolder) =>
+                (lstFiles) =>
                 {
                     _listView.Items.Clear();
-                    var items = lstFolder.Select(CreateFolderItem).ToArray();
-                    _listView.Items.AddRange(items);
+                    var items = new List<ListViewItem>();
+                    items.AddRange(lstFiles.Select(CreateItem));
+                    _listView.Items.AddRange(items.ToArray());
+                    FireSelectedChanged();
                 },
                 (ex) =>
                 {
-                    MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ShowMessageBox(ex);
                 });
+        }
+
+        private ListViewItem CreateItem(IS3FileSystemInfo s3Item)
+        {
+            string imgKey = s3Item.Type == FileSystemType.Directory ? "folder" : EnsureFileImageKey(s3Item);
+            var item = new ListViewItem(s3Item.Name, imgKey);
+            item.Tag = s3Item;
+            return item;
+        }
+
+        private string EnsureFileImageKey(IS3FileSystemInfo s3Item)
+        {
+            //var imageList = _listView.LargeImageList;
+            //if (imageList.Images.ContainsKey(s3Item.Extension))
+            //{
+            //    return s3Item.Extension;
+            //}
+            //else
+            //{
+                
+            //    var icon = Icon.ExtractAssociatedIcon(s3Item.Name);
+            //    if (icon != null)
+            //    {
+            //        imageList.Images.Add(s3Item.Extension, icon);
+            //        return s3Item.Extension;
+            //    }
+            //}
+            return "file_default";
+        }
+
+        private static void ShowMessageBox(Exception? ex)
+        {
+            MessageBox.Show(ex?.Message ?? "Unknown exception", "Exception", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void CreateContextMenu()
+        {
+            var createFolderToolStripMenuItem = new ToolStripMenuItem();
+            createFolderToolStripMenuItem.Text = "Create folder...";
+            createFolderToolStripMenuItem.Click += createFolderToolStripMenuItem_Click;
+
+            _deleteToolStripMenuItem = new ToolStripMenuItem();
+            _deleteToolStripMenuItem.Text = "Delete...";
+            _deleteToolStripMenuItem.Click += deleteToolStripMenuItem_Click;
+
+            _copyToolStripMenuItem = new ToolStripMenuItem();
+            _copyToolStripMenuItem.Text = "Copy";
+            _copyToolStripMenuItem.Click += copyToolStripMenuItem_Click;
+
+            _pasteToolStripMenuItem = new ToolStripMenuItem();
+            _pasteToolStripMenuItem.Text = "Paste";
+            _pasteToolStripMenuItem.Click += pasteToolStripMenuItem_Click;
+
+            _downloadToolStripMenuItem = new ToolStripMenuItem();
+            _downloadToolStripMenuItem.Text = "Download";
+            _downloadToolStripMenuItem.Click += downloadToolStripMenuItem_Click;
+
+            var refreshToolStripMenuItem = new ToolStripMenuItem();
+            refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
+
+            var treeContextMenu = new ContextMenuStrip();
+            treeContextMenu.Items.AddRange(new ToolStripItem[]
+            {
+                createFolderToolStripMenuItem,
+                new ToolStripSeparator(),
+                _downloadToolStripMenuItem,
+                new ToolStripSeparator(),
+                _copyToolStripMenuItem,
+                _pasteToolStripMenuItem,
+                new ToolStripSeparator(),
+                _deleteToolStripMenuItem,
+                new ToolStripSeparator(),
+                refreshToolStripMenuItem
+            });
+            treeContextMenu.Opening += treeContextMenu_Opening;
+
+            _listView.ContextMenuStrip = treeContextMenu;
+        }
+
+        private void createFolderToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            CreateNewFolder?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void deleteToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            var items = GetSelectedItems();
+            DeleteItems?.Invoke(this, new ItemsEventArgs(items.ToArray()));
+        }
+
+        private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            Refresh?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var selected = GetSelectedItems();
+            _deleteToolStripMenuItem!.Enabled = _listView.SelectedItems.Count > 0;
+            _copyToolStripMenuItem!.Enabled = selected.Any() && selected.All(it => it.Type == FileSystemType.File);
+            _downloadToolStripMenuItem!.Enabled = _copyToolStripMenuItem!.Enabled;
+            _pasteToolStripMenuItem!.Enabled =
+                _currentFolder != null &&
+                Clipboard.GetFileDropList().Count > 0;
+        }
+
+        private List<IS3FileSystemInfo> GetSelectedItems()
+        {
+            var items = new List<IS3FileSystemInfo>();
+            foreach (ListViewItem item in _listView.SelectedItems)
+            {
+                if (item.Tag is IS3FileSystemInfo si)
+                {
+                    items.Add(si);
+                }
+            }
+            return items;
+        }
+
+        private void downloadToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            DownloadSelectedFiles(null);
+        }
+
+        private void copyToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            DownloadSelectedFiles((files) =>
+            {
+                if (files.Any())
+                {
+                    var sc = new StringCollection();
+                    sc.AddRange(files.ToArray());
+                    Clipboard.SetFileDropList(sc);
+                }
+            });
+        }
+
+        private void DownloadSelectedFiles(Action<List<string>>? actionWithDownloadedFiles)
+        {
+            var selected = GetSelectedItems().Cast<S3FileInfo>().Where(it => it != null).ToList();
+            if (!selected.Any()) return;
+
+            if (string.IsNullOrEmpty(Program.Configuration.LocalFileStorageRoot))
+            {
+                using var dlg = new SettingsForm();
+                if (dlg.ShowDialog() == DialogResult.Cancel)
+                {
+                    return;
+                }
+            }
+
+            var root = Path.Combine(Program.Configuration.LocalFileStorageRoot, Program.S3Configuration.BucketName);
+            if (!Directory.Exists(root)) Directory.CreateDirectory(root);
+
+            ShowProgressForm("Downloading files...");
+            try
+            {
+                Utils.DoBackground(
+                    () =>
+                    {
+                        var lstFiles = new List<string>();
+                        foreach (var fi in selected)
+                        {
+                            var dir = Path.Combine(root, fi.Directory.Key);
+                            var localFilePath = Path.Combine(dir, fi.Name);
+                            fi.DownloadAsync(localFilePath).ConfigureAwait(false).GetAwaiter().GetResult();
+                            lstFiles.Add(localFilePath);
+                        }
+                        return lstFiles;
+                    },
+                    (lstFiles) =>
+                    {
+                        HideProgressForm();
+                        actionWithDownloadedFiles?.Invoke(lstFiles);
+                    },
+                    (ex) =>
+                    {
+                        HideProgressForm();
+                        ShowMessageBox(ex);
+                    });
+            }
+            catch (Exception ex)
+            {
+                HideProgressForm();
+                ShowMessageBox(ex);
+            }
+        }
+
+        private void ShowProgressForm(string message)
+        {
+            if (_progressForm != null) HideProgressForm();
+            _progressForm = new ProgressForm
+            {
+                Message = message
+            };
+            _progressForm.ShowEx(_mainForm);
+        }
+
+        private void HideProgressForm()
+        {
+            _progressForm?.Close();
+            _progressForm = null;
+        }
+
+        private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            var lstFiles = new List<string>();
+            foreach(var filePath in Clipboard.GetFileDropList())
+            {
+                if (!string.IsNullOrEmpty(filePath)) lstFiles.Add(filePath);
+            }
+            UploadFiles(lstFiles);
+        }
+
+        private void UploadFiles(IEnumerable<string> filePaths)
+        {
+            if (_currentFolder == null) return;
+
+            ShowProgressForm("Uploading file...");
+            try
+            {
+                Utils.DoBackground(
+                   () =>
+                   {
+                       foreach (var filePath in filePaths)
+                       {
+                           _currentFolder.UploadFileAsync(filePath).ConfigureAwait(false).GetAwaiter().GetResult();
+                       }
+                   },
+                   () =>
+                   {
+                       HideProgressForm();
+                       UpdateItems();
+                   },
+                   (ex) =>
+                   {
+                       HideProgressForm();
+                       ShowMessageBox(ex);
+                       UpdateItems();
+                   });
+            }
+            catch (Exception ex)
+            {
+                HideProgressForm();
+                ShowMessageBox(ex);
+                UpdateItems();
+            }
         }
     }
 }

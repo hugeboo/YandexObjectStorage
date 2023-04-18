@@ -14,7 +14,8 @@ namespace Dotkit.YandexObjectStorage.FileSystem.Tests
             var config = new YConfig();
             var client = new YClient(config);
 
-            var objects = YObject.GetObjects(client, "test1-sesv").Result;
+            var objects = YObject.GetAllAsync(client, "test1-sesv").Result;
+            Assert.Equal(0, objects.Count);
         }
     }
 }

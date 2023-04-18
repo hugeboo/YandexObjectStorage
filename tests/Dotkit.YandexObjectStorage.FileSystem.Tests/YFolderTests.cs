@@ -14,26 +14,27 @@ namespace Dotkit.YandexObjectStorage.FileSystem.Tests
             var config = new YConfig();
             var client = new YClient(config);
 
-            YBucket.Create(client, "test-folder-bucket1-sesv").Wait();
+            YBucket.CreateAsync(client, "test-folder-bucket1-sesv").Wait();
 
-            YFolder.Create(client, "test-folder-bucket1-sesv", "test-folder1-sesv").Wait();
-            YFolder.Create(client, "test-folder-bucket1-sesv", "test-folder2-sesv", "test-folder1-sesv").Wait();
+            YFolder.CreateAsync(client, "test-folder-bucket1-sesv", "test-folder1-sesv").Wait();
+            YFolder.CreateAsync(client, "test-folder-bucket1-sesv", "test-folder2-sesv", "test-folder1-sesv").Wait();
 
-            var folders = YFolder.GetFolders(client, "test-folder-bucket1-sesv").Result;
+            var folders = YFolder.GetAllAsync(client, "test-folder-bucket1-sesv").Result;
             Assert.Contains(folders, f => f.Name == "test-folder1-sesv");
 
-            var folders2 = YFolder.GetFolders(client, "test-folder-bucket1-sesv", "test-folder1-sesv").Result;
+            var folders2 = YFolder.GetAllAsync(client, "test-folder-bucket1-sesv", "test-folder1-sesv").Result;
             Assert.Contains(folders2, f => f.Name == "test-folder2-sesv");
 
-            YFolder.Delete(client, folders.First(f => f.Name == "test-folder1-sesv")).Wait();
+            YFolder.DeleteAsync(client, folders.First(f => f.Name == "test-folder1-sesv")).Wait();
+            //TODO: Assert
      
-            folders = YFolder.GetFolders(client, "test-folder-bucket1-sesv").Result;
+            folders = YFolder.GetAllAsync(client, "test-folder-bucket1-sesv").Result;
             Assert.DoesNotContain(folders, f => f.Name == "test-folder1-sesv");
 
-            folders2 = YFolder.GetFolders(client, "test-folder-bucket1-sesv", "test-folder1-sesv").Result;
+            folders2 = YFolder.GetAllAsync(client, "test-folder-bucket1-sesv", "test-folder1-sesv").Result;
             Assert.DoesNotContain(folders2, f => f.Name == "test-folder2-sesv");
 
-            YBucket.Delete(client, "test-folder-bucket1-sesv").Wait();
+            YBucket.DeleteAsync(client, "test-folder-bucket1-sesv").Wait();
         }
     }
 }
