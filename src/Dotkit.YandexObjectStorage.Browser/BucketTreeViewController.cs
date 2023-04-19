@@ -1,4 +1,5 @@
-﻿using Dotkit.S3;
+﻿using Amazon.Auth.AccessControlPolicy;
+using Dotkit.S3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -70,15 +71,17 @@ namespace Dotkit.YandexObjectStorage.Browser
         private void CreateContextMenu()
         {
             _createFolderToolStripMenuItem = new ToolStripMenuItem();
-            _createFolderToolStripMenuItem.Text = "Create folder...";
+            _createFolderToolStripMenuItem.Text = "Create Directory...";
             _createFolderToolStripMenuItem.Click += createFolderToolStripMenuItem_Click;
 
             _deleteFolderToolStripMenuItem = new ToolStripMenuItem();
-            _deleteFolderToolStripMenuItem.Text = "Delete folder";
+            _deleteFolderToolStripMenuItem.Text = "Delete Directory...";
+            _deleteFolderToolStripMenuItem.Image = Properties.Resources.icons8_delete_24;
             _deleteFolderToolStripMenuItem.Click += deleteFolderToolStripMenuItem_Click;
 
             var refreshToolStripMenuItem = new ToolStripMenuItem();
             refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Image = Properties.Resources.icons8_synchro_24;
             refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
 
             var treeContextMenu = new ContextMenuStrip();
@@ -144,6 +147,11 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
         {
+            RefreshNode();
+        }
+
+        public void RefreshNode()
+        {
             RefreshNode(_treeView.SelectedNode);
         }
 
@@ -181,9 +189,9 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            var selected = _treeView.SelectedNode?.Tag;
+            var selected = _treeView.SelectedNode?.Tag as S3DirectoryInfo;
             _createFolderToolStripMenuItem!.Enabled = true;
-            _deleteFolderToolStripMenuItem!.Enabled = selected != null;
+            _deleteFolderToolStripMenuItem!.Enabled = !string.IsNullOrEmpty(selected?.Key);
         }
 
         private void ObjectListViewController_FolderDoubleClick(object? sender, FolderEventArgs e)

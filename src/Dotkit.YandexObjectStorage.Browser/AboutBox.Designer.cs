@@ -100,6 +100,7 @@
             // 
             // textBoxDescription
             // 
+            textBoxDescription.BorderStyle = BorderStyle.None;
             textBoxDescription.Dock = DockStyle.Fill;
             textBoxDescription.Location = new Point(191, 105);
             textBoxDescription.Margin = new Padding(8, 5, 4, 5);

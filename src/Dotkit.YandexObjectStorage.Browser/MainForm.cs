@@ -117,5 +117,60 @@ namespace Dotkit.YandexObjectStorage.Browser
             using var dlg = new SettingsForm();
             dlg.ShowDialog();
         }
+
+        private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _bucketTreeViewController.RefreshNode();
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _objectListViewController.Copy();
+        }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _objectListViewController.Paste();
+        }
+
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _objectListViewController.Delete();
+        }
+
+        private void uiUpdateTimer_Tick(object sender, EventArgs e)
+        {
+            copyToolStripButton.Enabled = _objectListViewController.IsCopyAvailable();
+            copyToolStripMenuItem.Enabled = copyToolStripButton.Enabled;
+            pasteToolStripButton.Enabled = _objectListViewController.IsPasteAvailable();
+            pasteToolStripMenuItem.Enabled = pasteToolStripButton.Enabled;
+            deleteToolStripButton.Enabled = _objectListViewController.IsDeleteAvailable();
+            deleteToolStripMenuItem.Enabled = deleteToolStripButton.Enabled;
+        }
+
+        private void settingsToolStripButton_Click(object sender, EventArgs e)
+        {
+            settingsToolStripMenuItem_Click(sender, e);
+        }
+
+        private void copyToolStripButton_Click(object sender, EventArgs e)
+        {
+            copyToolStripMenuItem_Click(sender, e);
+        }
+
+        private void pasteToolStripButton_Click(object sender, EventArgs e)
+        {
+            pasteToolStripMenuItem_Click(sender, e);
+        }
+
+        private void deleteToolStripButton_Click(object sender, EventArgs e)
+        {
+            deleteToolStripMenuItem_Click(sender, e);
+        }
+
+        private void refreshToolStripButton_Click(object sender, EventArgs e)
+        {
+            refreshToolStripMenuItem_Click(sender, e);
+        }
     }
 }

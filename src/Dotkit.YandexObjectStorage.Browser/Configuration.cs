@@ -129,21 +129,21 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         public static bool Validate(this S3Configuration configuration)
         {
-            return !string.IsNullOrEmpty(configuration.SecretAccessKey) &&
-                !string.IsNullOrEmpty(configuration.ServiceURL) &&
-                !string.IsNullOrEmpty(configuration.AccessKeyId) &&
-                !string.IsNullOrEmpty(configuration.BucketName);
+            return !string.IsNullOrEmpty(configuration?.SecretAccessKey) &&
+                !string.IsNullOrEmpty(configuration?.ServiceURL) &&
+                !string.IsNullOrEmpty(configuration?.AccessKeyId) &&
+                !string.IsNullOrEmpty(configuration?.BucketName);
         }
 
         public static S3Configuration Clone(this S3Configuration configuraion)
         {
             return new S3Configuration()
             {
-                SecretAccessKey = configuraion.SecretAccessKey,
-                ServiceURL = configuraion.ServiceURL,
-                AccessKeyId = configuraion.AccessKeyId,
-                BucketName = configuraion.BucketName,
-                Region = configuraion.Region,
+                SecretAccessKey = configuraion?.SecretAccessKey ?? string.Empty,
+                ServiceURL = configuraion?.ServiceURL ?? string.Empty,
+                AccessKeyId = configuraion?.AccessKeyId ?? string.Empty,
+                BucketName = configuraion?.BucketName ?? string.Empty,
+                Region = configuraion?.Region ?? string.Empty,
             };
         }
     }

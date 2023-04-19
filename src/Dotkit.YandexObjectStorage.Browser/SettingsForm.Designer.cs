@@ -217,11 +217,11 @@
             accessKeyIdTextBox.Size = new Size(484, 27);
             accessKeyIdTextBox.TabIndex = 2;
             // 
-            // bucketNamTextBox
+            // bucketNameTextBox
             // 
             bucketNameTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             bucketNameTextBox.Location = new Point(142, 55);
-            bucketNameTextBox.Name = "bucketNamTextBox";
+            bucketNameTextBox.Name = "bucketNameTextBox";
             bucketNameTextBox.Size = new Size(484, 27);
             bucketNameTextBox.TabIndex = 1;
             // 
@@ -247,6 +247,7 @@
             Controls.Add(tabControl1);
             Controls.Add(cancelButton);
             Controls.Add(okButton);
+            DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;

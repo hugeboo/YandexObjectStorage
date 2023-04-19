@@ -33,10 +33,26 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             mainMenuStrip = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
+            refreshToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator3 = new ToolStripSeparator();
+            settingsToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator1 = new ToolStripSeparator();
             exitToolStripMenuItem = new ToolStripMenuItem();
+            editToolStripMenuItem = new ToolStripMenuItem();
+            copyToolStripMenuItem = new ToolStripMenuItem();
+            pasteToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator4 = new ToolStripSeparator();
+            deleteToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             mainToolStrip = new ToolStrip();
+            settingsToolStripButton = new ToolStripButton();
+            toolStripSeparator = new ToolStripSeparator();
+            copyToolStripButton = new ToolStripButton();
+            pasteToolStripButton = new ToolStripButton();
+            deleteToolStripButton = new ToolStripButton();
+            toolStripSeparator2 = new ToolStripSeparator();
+            refreshToolStripButton = new ToolStripButton();
             mainStatusStrip = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
@@ -47,9 +63,9 @@
             mainListView = new ListView();
             listLargeImageList = new ImageList(components);
             listSmallImageList = new ImageList(components);
-            settingsToolStripMenuItem = new ToolStripMenuItem();
-            toolStripSeparator1 = new ToolStripSeparator();
+            uiUpdateTimer = new System.Windows.Forms.Timer(components);
             mainMenuStrip.SuspendLayout();
+            mainToolStrip.SuspendLayout();
             mainStatusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)mainSplitContainer).BeginInit();
             mainSplitContainer.Panel1.SuspendLayout();
@@ -60,7 +76,7 @@
             // mainMenuStrip
             // 
             mainMenuStrip.ImageScalingSize = new Size(20, 20);
-            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
+            mainMenuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, helpToolStripMenuItem });
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Padding = new Padding(5, 2, 0, 2);
@@ -70,17 +86,82 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { settingsToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { refreshToolStripMenuItem, toolStripSeparator3, settingsToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(46, 24);
             fileToolStripMenuItem.Text = "File";
             // 
+            // refreshToolStripMenuItem
+            // 
+            refreshToolStripMenuItem.Image = Properties.Resources.icons8_synchro_24;
+            refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
+            refreshToolStripMenuItem.Size = new Size(154, 26);
+            refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(151, 6);
+            // 
+            // settingsToolStripMenuItem
+            // 
+            settingsToolStripMenuItem.Image = Properties.Resources.icons8_settings_24;
+            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            settingsToolStripMenuItem.Size = new Size(154, 26);
+            settingsToolStripMenuItem.Text = "Settings...";
+            settingsToolStripMenuItem.Click += settingsToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new Size(151, 6);
+            // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(224, 26);
+            exitToolStripMenuItem.Size = new Size(154, 26);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+            // 
+            // editToolStripMenuItem
+            // 
+            editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator4, deleteToolStripMenuItem });
+            editToolStripMenuItem.Name = "editToolStripMenuItem";
+            editToolStripMenuItem.Size = new Size(49, 24);
+            editToolStripMenuItem.Text = "Edit";
+            // 
+            // copyToolStripMenuItem
+            // 
+            copyToolStripMenuItem.Enabled = false;
+            copyToolStripMenuItem.Image = Properties.Resources.copyToolStripButton_Image;
+            copyToolStripMenuItem.Name = "copyToolStripMenuItem";
+            copyToolStripMenuItem.Size = new Size(136, 26);
+            copyToolStripMenuItem.Text = "Copy";
+            copyToolStripMenuItem.Click += copyToolStripMenuItem_Click;
+            // 
+            // pasteToolStripMenuItem
+            // 
+            pasteToolStripMenuItem.Enabled = false;
+            pasteToolStripMenuItem.Image = Properties.Resources.pasteToolStripButton_Image;
+            pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
+            pasteToolStripMenuItem.Size = new Size(136, 26);
+            pasteToolStripMenuItem.Text = "Paste";
+            pasteToolStripMenuItem.Click += pasteToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator4
+            // 
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(133, 6);
+            // 
+            // deleteToolStripMenuItem
+            // 
+            deleteToolStripMenuItem.Enabled = false;
+            deleteToolStripMenuItem.Image = Properties.Resources.icons8_delete_24;
+            deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            deleteToolStripMenuItem.Size = new Size(136, 26);
+            deleteToolStripMenuItem.Text = "Delete";
+            deleteToolStripMenuItem.Click += deleteToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -99,11 +180,75 @@
             // mainToolStrip
             // 
             mainToolStrip.ImageScalingSize = new Size(20, 20);
+            mainToolStrip.Items.AddRange(new ToolStripItem[] { settingsToolStripButton, toolStripSeparator, copyToolStripButton, pasteToolStripButton, deleteToolStripButton, toolStripSeparator2, refreshToolStripButton });
             mainToolStrip.Location = new Point(0, 28);
             mainToolStrip.Name = "mainToolStrip";
-            mainToolStrip.Size = new Size(908, 25);
+            mainToolStrip.Size = new Size(908, 27);
             mainToolStrip.TabIndex = 1;
             mainToolStrip.Text = "toolStrip1";
+            // 
+            // settingsToolStripButton
+            // 
+            settingsToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            settingsToolStripButton.Image = (Image)resources.GetObject("settingsToolStripButton.Image");
+            settingsToolStripButton.ImageTransparentColor = Color.Magenta;
+            settingsToolStripButton.Name = "settingsToolStripButton";
+            settingsToolStripButton.Size = new Size(29, 24);
+            settingsToolStripButton.Text = "Settings";
+            settingsToolStripButton.Click += settingsToolStripButton_Click;
+            // 
+            // toolStripSeparator
+            // 
+            toolStripSeparator.Name = "toolStripSeparator";
+            toolStripSeparator.Size = new Size(6, 27);
+            // 
+            // copyToolStripButton
+            // 
+            copyToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            copyToolStripButton.Enabled = false;
+            copyToolStripButton.Image = (Image)resources.GetObject("copyToolStripButton.Image");
+            copyToolStripButton.ImageTransparentColor = Color.Magenta;
+            copyToolStripButton.Name = "copyToolStripButton";
+            copyToolStripButton.Size = new Size(29, 24);
+            copyToolStripButton.Text = "Copy";
+            copyToolStripButton.Click += copyToolStripButton_Click;
+            // 
+            // pasteToolStripButton
+            // 
+            pasteToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            pasteToolStripButton.Enabled = false;
+            pasteToolStripButton.Image = (Image)resources.GetObject("pasteToolStripButton.Image");
+            pasteToolStripButton.ImageTransparentColor = Color.Magenta;
+            pasteToolStripButton.Name = "pasteToolStripButton";
+            pasteToolStripButton.Size = new Size(29, 24);
+            pasteToolStripButton.Text = "Paste";
+            pasteToolStripButton.Click += pasteToolStripButton_Click;
+            // 
+            // deleteToolStripButton
+            // 
+            deleteToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            deleteToolStripButton.Enabled = false;
+            deleteToolStripButton.Image = Properties.Resources.icons8_delete_24;
+            deleteToolStripButton.ImageTransparentColor = Color.Magenta;
+            deleteToolStripButton.Name = "deleteToolStripButton";
+            deleteToolStripButton.Size = new Size(29, 24);
+            deleteToolStripButton.Text = "Delete";
+            deleteToolStripButton.Click += deleteToolStripButton_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(6, 27);
+            // 
+            // refreshToolStripButton
+            // 
+            refreshToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            refreshToolStripButton.Image = (Image)resources.GetObject("refreshToolStripButton.Image");
+            refreshToolStripButton.ImageTransparentColor = Color.Magenta;
+            refreshToolStripButton.Name = "refreshToolStripButton";
+            refreshToolStripButton.Size = new Size(29, 24);
+            refreshToolStripButton.Text = "Refresh";
+            refreshToolStripButton.Click += refreshToolStripButton_Click;
             // 
             // mainStatusStrip
             // 
@@ -137,7 +282,7 @@
             // 
             mainSplitContainer.Dock = DockStyle.Fill;
             mainSplitContainer.FixedPanel = FixedPanel.Panel1;
-            mainSplitContainer.Location = new Point(0, 53);
+            mainSplitContainer.Location = new Point(0, 55);
             mainSplitContainer.Name = "mainSplitContainer";
             // 
             // mainSplitContainer.Panel1
@@ -147,7 +292,7 @@
             // mainSplitContainer.Panel2
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
-            mainSplitContainer.Size = new Size(908, 407);
+            mainSplitContainer.Size = new Size(908, 405);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
             // 
@@ -161,7 +306,7 @@
             mainTreeView.Location = new Point(0, 0);
             mainTreeView.Name = "mainTreeView";
             mainTreeView.SelectedImageIndex = 0;
-            mainTreeView.Size = new Size(249, 407);
+            mainTreeView.Size = new Size(249, 405);
             mainTreeView.TabIndex = 0;
             // 
             // treeImageList
@@ -182,7 +327,7 @@
             mainListView.Location = new Point(0, 0);
             mainListView.Name = "mainListView";
             mainListView.ShowItemToolTips = true;
-            mainListView.Size = new Size(655, 407);
+            mainListView.Size = new Size(655, 405);
             mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
@@ -203,17 +348,11 @@
             listSmallImageList.Images.SetKeyName(0, "file_default");
             listSmallImageList.Images.SetKeyName(1, "folder");
             // 
-            // settingsToolStripMenuItem
+            // uiUpdateTimer
             // 
-            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new Size(224, 26);
-            settingsToolStripMenuItem.Text = "Settings...";
-            settingsToolStripMenuItem.Click += settingsToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator1
-            // 
-            toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(221, 6);
+            uiUpdateTimer.Enabled = true;
+            uiUpdateTimer.Interval = 500;
+            uiUpdateTimer.Tick += uiUpdateTimer_Tick;
             // 
             // MainForm
             // 
@@ -233,6 +372,8 @@
             Load += MainForm_Load;
             mainMenuStrip.ResumeLayout(false);
             mainMenuStrip.PerformLayout();
+            mainToolStrip.ResumeLayout(false);
+            mainToolStrip.PerformLayout();
             mainStatusStrip.ResumeLayout(false);
             mainStatusStrip.PerformLayout();
             mainSplitContainer.Panel1.ResumeLayout(false);
@@ -263,5 +404,20 @@
         private ToolStripMenuItem aboutToolStripMenuItem;
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator1;
+        private ToolStripMenuItem refreshToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparator3;
+        private ToolStripMenuItem editToolStripMenuItem;
+        private ToolStripMenuItem copyToolStripMenuItem;
+        private ToolStripMenuItem pasteToolStripMenuItem;
+        private ToolStripMenuItem deleteToolStripMenuItem;
+        private ToolStripButton settingsToolStripButton;
+        private ToolStripSeparator toolStripSeparator;
+        private ToolStripButton copyToolStripButton;
+        private ToolStripButton pasteToolStripButton;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripButton refreshToolStripButton;
+        private ToolStripSeparator toolStripSeparator4;
+        private ToolStripButton deleteToolStripButton;
+        private System.Windows.Forms.Timer uiUpdateTimer;
     }
 }

@@ -13,17 +13,18 @@ namespace Dotkit.YandexObjectStorage.Browser
         [STAThread]
         static void Main()
         {
+            Application.EnableVisualStyles();
+            //Application.SetCompatibleTextRenderingDefault(true);
+
             Configuration = Configuration.Load();
 
             var s3Config = LoadS3Configuration();
             if (s3Config == null)
             {
-                Application.Exit();
+                return;
             }
 
             S3Configuration = s3Config!;
-
-            Application.EnableVisualStyles();
 
             if (!Configuration.Validate() || !S3Configuration.Validate())
             {

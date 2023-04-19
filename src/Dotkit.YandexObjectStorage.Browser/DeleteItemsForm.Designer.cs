@@ -43,10 +43,9 @@
             // deleteButton
             // 
             deleteButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            deleteButton.AutoSize = true;
-            deleteButton.Location = new Point(594, 408);
+            deleteButton.Location = new Point(550, 408);
             deleteButton.Name = "deleteButton";
-            deleteButton.Size = new Size(94, 30);
+            deleteButton.Size = new Size(138, 30);
             deleteButton.TabIndex = 0;
             deleteButton.Text = "Delete";
             deleteButton.UseVisualStyleBackColor = true;

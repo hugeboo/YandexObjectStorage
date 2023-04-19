@@ -57,6 +57,13 @@ namespace Dotkit.YandexObjectStorage.Browser
                 {
                     pasteToolStripMenuItem_Click(sender, e);
                 }
+                else if (e.KeyCode == Keys.A)
+                {
+                    foreach(ListViewItem item in _listView.Items)
+                    {
+                        item.Selected = true;
+                    }
+                }
             }
         }
 
@@ -171,14 +178,17 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             _deleteToolStripMenuItem = new ToolStripMenuItem();
             _deleteToolStripMenuItem.Text = "Delete...";
+            _deleteToolStripMenuItem.Image = Properties.Resources.icons8_delete_24;
             _deleteToolStripMenuItem.Click += deleteToolStripMenuItem_Click;
 
             _copyToolStripMenuItem = new ToolStripMenuItem();
             _copyToolStripMenuItem.Text = "Copy";
+            _copyToolStripMenuItem.Image = Properties.Resources.copyToolStripButton_Image;
             _copyToolStripMenuItem.Click += copyToolStripMenuItem_Click;
 
             _pasteToolStripMenuItem = new ToolStripMenuItem();
             _pasteToolStripMenuItem.Text = "Paste";
+            _pasteToolStripMenuItem.Image = Properties.Resources.pasteToolStripButton_Image;
             _pasteToolStripMenuItem.Click += pasteToolStripMenuItem_Click;
 
             _downloadToolStripMenuItem = new ToolStripMenuItem();
@@ -187,6 +197,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             var refreshToolStripMenuItem = new ToolStripMenuItem();
             refreshToolStripMenuItem.Text = "Refresh";
+            refreshToolStripMenuItem.Image = Properties.Resources.icons8_synchro_24;
             refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
 
             var treeContextMenu = new ContextMenuStrip();
@@ -213,10 +224,20 @@ namespace Dotkit.YandexObjectStorage.Browser
             CreateNewFolder?.Invoke(this, EventArgs.Empty);
         }
 
-        private void deleteToolStripMenuItem_Click(object? sender, EventArgs e)
+        public bool IsDeleteAvailable()
+        {
+            return _listView.Focused && _listView.SelectedItems.Count > 0;
+        }
+
+        public void Delete()
         {
             var items = GetSelectedItems();
             DeleteItems?.Invoke(this, new ItemsEventArgs(items.ToArray()));
+        }
+
+        private void deleteToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            Delete();
         }
 
         private void refreshToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -226,13 +247,10 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void treeContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            var selected = GetSelectedItems();
-            _deleteToolStripMenuItem!.Enabled = _listView.SelectedItems.Count > 0;
-            _copyToolStripMenuItem!.Enabled = selected.Any() && selected.All(it => it.Type == FileSystemType.File);
+            _deleteToolStripMenuItem!.Enabled = IsDeleteAvailable();
+            _copyToolStripMenuItem!.Enabled = IsCopyAvailable();
             _downloadToolStripMenuItem!.Enabled = _copyToolStripMenuItem!.Enabled;
-            _pasteToolStripMenuItem!.Enabled =
-                _currentFolder != null &&
-                Clipboard.GetFileDropList().Count > 0;
+            _pasteToolStripMenuItem!.Enabled = IsPasteAvailable();
         }
 
         private List<IS3FileSystemInfo> GetSelectedItems()
@@ -254,6 +272,21 @@ namespace Dotkit.YandexObjectStorage.Browser
         }
 
         private void copyToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            Copy();
+        }
+
+        public bool IsCopyAvailable()
+        {
+            if (_listView.Focused)
+            {
+                var selected = GetSelectedItems();
+                return selected.Any() && selected.All(it => it.Type == FileSystemType.File);
+            }
+            return false;
+        }
+
+        public void Copy()
         {
             DownloadSelectedFiles((files) =>
             {
@@ -333,14 +366,25 @@ namespace Dotkit.YandexObjectStorage.Browser
             _progressForm = null;
         }
 
-        private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
+        public bool IsPasteAvailable()
+        {
+            return _listView.Focused && _currentFolder != null &&
+                Clipboard.GetFileDropList().Count > 0;
+        }
+
+        public void Paste()
         {
             var lstFiles = new List<string>();
-            foreach(var filePath in Clipboard.GetFileDropList())
+            foreach (var filePath in Clipboard.GetFileDropList())
             {
                 if (!string.IsNullOrEmpty(filePath)) lstFiles.Add(filePath);
             }
             UploadFiles(lstFiles);
+        }
+
+        private void pasteToolStripMenuItem_Click(object? sender, EventArgs e)
+        {
+            Paste();
         }
 
         private void UploadFiles(IEnumerable<string> filePaths)
