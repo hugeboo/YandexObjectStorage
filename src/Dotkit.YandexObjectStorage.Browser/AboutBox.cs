@@ -35,7 +35,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             this.labelCopyright.Text = copyright;
 
             var desc = (asm.GetCustomAttribute(typeof(AssemblyDescriptionAttribute)) as AssemblyDescriptionAttribute)?.Description;
-            var description = $"{desc}\r\n\r\nUsed packages:\r\n{s3Asm.FullName}\r\n{awsAsm.FullName}\r\n{jsonAsm.FullName}";
+            var description = $"{desc}\r\n\r\nUsed packages:\r\n--------------\r\n\r\n{s3Asm.FullName}\r\n\r\n{awsAsm.FullName}\r\n\r\n{jsonAsm.FullName}";
             this.textBoxDescription.Text = description;
         }
     }

@@ -100,8 +100,8 @@
             // 
             // textBoxDescription
             // 
-            textBoxDescription.BorderStyle = BorderStyle.None;
             textBoxDescription.Dock = DockStyle.Fill;
+            textBoxDescription.Font = new Font("Cascadia Mono", 8F, FontStyle.Regular, GraphicsUnit.Point);
             textBoxDescription.Location = new Point(191, 105);
             textBoxDescription.Margin = new Padding(8, 5, 4, 5);
             textBoxDescription.Multiline = true;
