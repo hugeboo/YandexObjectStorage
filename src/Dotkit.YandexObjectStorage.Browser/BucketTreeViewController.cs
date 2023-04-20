@@ -11,7 +11,6 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class BucketTreeViewController
     {
-        private readonly IS3Service _service;
         private readonly TreeView _treeView;
         private readonly MainForm _mainForm;
         private readonly HashSet<TreeNode> _initializedNodes = new();
@@ -23,9 +22,8 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? EmptySelectedChanged;
         public event EventHandler<FolderEventArgs>? FolderSelectedChanged;
 
-        public BucketTreeViewController(IS3Service service, TreeView treeView, MainForm mainForm)
+        public BucketTreeViewController(TreeView treeView, MainForm mainForm)
         {
-            _service = service;
             _treeView = treeView;
             _mainForm = mainForm;
             _treeView.AfterSelect += treeView_AfterSelect;
@@ -108,7 +106,7 @@ namespace Dotkit.YandexObjectStorage.Browser
                 Utils.DoBackground(
                     () =>
                     {
-                        if (parentFolder == null) parentFolder = _service.Root;
+                        if (parentFolder == null) parentFolder = _mainForm.Service.Root;
 
                         var fi = parentFolder.GetSubDirectoryAsync(dlg.FolderName).ConfigureAwait(false).GetAwaiter().GetResult();
                         fi.CreateAsync().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -133,14 +131,14 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             if (node?.Tag is not S3DirectoryInfo fi) return;
 
-            using var dlg = new DeleteItemsForm(_service, new[] { fi });
+            using var dlg = new DeleteItemsForm(_mainForm.Service, new[] { fi });
             dlg.ShowDialog(_mainForm);
             RefreshNode(node.Parent);
         }
 
         private void DeleteItems(TreeNode parentNode, IEnumerable<IS3FileSystemInfo> items)
         {
-            using var dlg = new DeleteItemsForm(_service, items);
+            using var dlg = new DeleteItemsForm(_mainForm.Service, items);
             dlg.ShowDialog(_mainForm);
             RefreshNode(parentNode);
         }
@@ -206,7 +204,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         public void Init()
         {
             _treeView.Nodes.Clear();
-            var rootNode = CreateFolderNode(_service.Root);
+            var rootNode = CreateFolderNode(_mainForm.Service.Root);
             _treeView.Nodes.Add(rootNode);
             _treeView.SelectedNode = rootNode;
         }

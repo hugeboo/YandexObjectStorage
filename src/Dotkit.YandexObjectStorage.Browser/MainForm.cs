@@ -4,10 +4,11 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     public partial class MainForm : Form
     {
-        private readonly IS3Service _service;
         private readonly BucketTreeViewController _bucketTreeViewController;
         private readonly ObjectListViewController _objectListViewController;
         private readonly UIState _uiState;
+
+        public IS3Service Service { get; set; }
 
         public MainForm()
         {
@@ -15,14 +16,9 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             _uiState = UIState.Load();
 
-            //Program.S3Configuration.ServiceURL = "https://s3.yandexcloud.net";
-            //Program.S3Configuration.AccessKeyId = "YCAJEIzcBfUuI2bK_G3l4k4br";
-            //Program.S3Configuration.SecretAccessKey = "YCNOYDJLZkFf292p-BZMrHLxsnuWzE2JCWCXlA1N";
-            //Program.S3Configuration.BucketName = "test1-sesv";
-
-            _service = Program.S3Configuration.CreateService();
-            _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView, this);
-            _objectListViewController = new ObjectListViewController(_service, mainListView, this, folderTextBox);
+            Service = Program.S3Configuration.CreateService();
+            _bucketTreeViewController = new BucketTreeViewController(mainTreeView, this);
+            _objectListViewController = new ObjectListViewController(mainListView, this, folderTextBox);
             _bucketTreeViewController.Attach(_objectListViewController);
             _objectListViewController.Attach(_bucketTreeViewController);
 
@@ -115,7 +111,11 @@ namespace Dotkit.YandexObjectStorage.Browser
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var dlg = new SettingsForm();
-            dlg.ShowDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                Service = Program.S3Configuration.CreateService();
+                _bucketTreeViewController.RefreshNode();
+            }
         }
 
         private void refreshToolStripMenuItem_Click(object sender, EventArgs e)

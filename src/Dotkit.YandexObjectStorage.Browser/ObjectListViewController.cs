@@ -13,7 +13,6 @@ namespace Dotkit.YandexObjectStorage.Browser
 {
     internal sealed class ObjectListViewController
     {
-        private readonly IS3Service _service;
         private readonly ListView _listView;
         private readonly MainForm _mainForm;
         private readonly TextBox _folderTextBox;
@@ -32,9 +31,8 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? Refresh;
         public event EventHandler<ItemsEventArgs>? SelectedChanged;
 
-        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm, TextBox folderTextBox)
+        public ObjectListViewController(ListView listView, MainForm mainForm, TextBox folderTextBox)
         {
-            _service = service;
             _listView = listView;
             _mainForm = mainForm;
             _folderTextBox = folderTextBox;
@@ -57,8 +55,10 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             string result = new string(path);
             // TODO: Use Utils.EllipsisString
+#pragma warning disable CS0618 // Тип или член устарел
             TextRenderer.MeasureText(result, _folderTextBox.Font, _folderTextBox.Size, 
                 TextFormatFlags.ModifyString | TextFormatFlags.PathEllipsis);
+#pragma warning restore CS0618 // Тип или член устарел
             var index0 = result.IndexOf('\0');
             if (index0 >= 0) result = result.Substring(0, index0);
             return result;
@@ -332,7 +332,13 @@ namespace Dotkit.YandexObjectStorage.Browser
             if (string.IsNullOrEmpty(Program.Configuration.LocalFileStorageRoot))
             {
                 using var dlg = new SettingsForm();
-                if (dlg.ShowDialog() == DialogResult.Cancel)
+                var dr = dlg.ShowDialog();
+                if (dr == DialogResult.OK)
+                {
+                    _mainForm.Service = Program.S3Configuration.CreateService();
+                    refreshToolStripMenuItem_Click(this, EventArgs.Empty);
+                }
+                else if (dr == DialogResult.Cancel)
                 {
                     return;
                 }
