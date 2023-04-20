@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.Tracing;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         private readonly IS3Service _service;
         private readonly ListView _listView;
         private readonly MainForm _mainForm;
+        private readonly TextBox _folderTextBox;
 
         private ToolStripMenuItem? _deleteToolStripMenuItem;
         private ToolStripMenuItem? _copyToolStripMenuItem;
@@ -30,15 +32,36 @@ namespace Dotkit.YandexObjectStorage.Browser
         public event EventHandler? Refresh;
         public event EventHandler<ItemsEventArgs>? SelectedChanged;
 
-        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm)
+        public ObjectListViewController(IS3Service service, ListView listView, MainForm mainForm, TextBox folderTextBox)
         {
             _service = service;
             _listView = listView;
             _mainForm = mainForm;
+            _folderTextBox = folderTextBox;
             listView.MouseDoubleClick += ListView_MouseDoubleClick;
             listView.ItemSelectionChanged += ListView_ItemSelectionChanged;
             listView.KeyDown += ListView_KeyDown;
+            folderTextBox.Resize += FolderTextBox_Resize;
             CreateContextMenu();
+        }
+
+        private void FolderTextBox_Resize(object? sender, EventArgs e)
+        {
+            if (_currentFolder != null)
+            {
+                _folderTextBox.Text = EllipsisFolderPath(_currentFolder.FullName);
+            }
+        }
+
+        private string EllipsisFolderPath(string path)
+        {
+            string result = new string(path);
+            // TODO: Use Utils.EllipsisString
+            TextRenderer.MeasureText(result, _folderTextBox.Font, _folderTextBox.Size, 
+                TextFormatFlags.ModifyString | TextFormatFlags.PathEllipsis);
+            var index0 = result.IndexOf('\0');
+            if (index0 >= 0) result = result.Substring(0, index0);
+            return result;
         }
 
         private void ListView_KeyDown(object? sender, KeyEventArgs e)
@@ -99,12 +122,14 @@ namespace Dotkit.YandexObjectStorage.Browser
         private void BucketTreeViewController_EmptySelectedChanged(object? sender, EventArgs e)
         {
             _currentFolder = null;
+            _folderTextBox.Text = null;
             UpdateItems();
         }
 
         private void BucketTreeViewController_FolderSelectedChanged(object? sender, FolderEventArgs e)
         {
             _currentFolder = e.Folder;
+            _folderTextBox.Text = EllipsisFolderPath(e.Folder.FullName);
             UpdateItems();
         }
 

@@ -63,6 +63,8 @@
             mainListView = new ListView();
             listLargeImageList = new ImageList(components);
             listSmallImageList = new ImageList(components);
+            folderPanel = new Panel();
+            folderTextBox = new TextBox();
             uiUpdateTimer = new System.Windows.Forms.Timer(components);
             mainMenuStrip.SuspendLayout();
             mainToolStrip.SuspendLayout();
@@ -71,6 +73,7 @@
             mainSplitContainer.Panel1.SuspendLayout();
             mainSplitContainer.Panel2.SuspendLayout();
             mainSplitContainer.SuspendLayout();
+            folderPanel.SuspendLayout();
             SuspendLayout();
             // 
             // mainMenuStrip
@@ -80,7 +83,7 @@
             mainMenuStrip.Location = new Point(0, 0);
             mainMenuStrip.Name = "mainMenuStrip";
             mainMenuStrip.Padding = new Padding(5, 2, 0, 2);
-            mainMenuStrip.Size = new Size(908, 28);
+            mainMenuStrip.Size = new Size(902, 28);
             mainMenuStrip.TabIndex = 0;
             mainMenuStrip.Text = "menuStrip1";
             // 
@@ -183,7 +186,7 @@
             mainToolStrip.Items.AddRange(new ToolStripItem[] { settingsToolStripButton, toolStripSeparator, copyToolStripButton, pasteToolStripButton, deleteToolStripButton, toolStripSeparator2, refreshToolStripButton });
             mainToolStrip.Location = new Point(0, 28);
             mainToolStrip.Name = "mainToolStrip";
-            mainToolStrip.Size = new Size(908, 27);
+            mainToolStrip.Size = new Size(902, 27);
             mainToolStrip.TabIndex = 1;
             mainToolStrip.Text = "toolStrip1";
             // 
@@ -257,14 +260,14 @@
             mainStatusStrip.Location = new Point(0, 460);
             mainStatusStrip.Name = "mainStatusStrip";
             mainStatusStrip.Padding = new Padding(1, 0, 12, 0);
-            mainStatusStrip.Size = new Size(908, 22);
+            mainStatusStrip.Size = new Size(902, 22);
             mainStatusStrip.TabIndex = 2;
             mainStatusStrip.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new Size(895, 16);
+            toolStripStatusLabel1.Size = new Size(889, 16);
             toolStripStatusLabel1.Spring = true;
             toolStripStatusLabel1.TextAlign = ContentAlignment.MiddleLeft;
             // 
@@ -292,7 +295,8 @@
             // mainSplitContainer.Panel2
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
-            mainSplitContainer.Size = new Size(908, 405);
+            mainSplitContainer.Panel2.Controls.Add(folderPanel);
+            mainSplitContainer.Size = new Size(902, 405);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
             // 
@@ -324,10 +328,10 @@
             mainListView.BorderStyle = BorderStyle.None;
             mainListView.Dock = DockStyle.Fill;
             mainListView.LargeImageList = listLargeImageList;
-            mainListView.Location = new Point(0, 0);
+            mainListView.Location = new Point(0, 30);
             mainListView.Name = "mainListView";
             mainListView.ShowItemToolTips = true;
-            mainListView.Size = new Size(655, 405);
+            mainListView.Size = new Size(649, 375);
             mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
@@ -348,6 +352,27 @@
             listSmallImageList.Images.SetKeyName(0, "file_default");
             listSmallImageList.Images.SetKeyName(1, "folder");
             // 
+            // folderPanel
+            // 
+            folderPanel.Controls.Add(folderTextBox);
+            folderPanel.Dock = DockStyle.Top;
+            folderPanel.Location = new Point(0, 0);
+            folderPanel.Name = "folderPanel";
+            folderPanel.Size = new Size(649, 30);
+            folderPanel.TabIndex = 3;
+            // 
+            // folderTextBox
+            // 
+            folderTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            folderTextBox.BorderStyle = BorderStyle.None;
+            folderTextBox.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            folderTextBox.Location = new Point(14, 0);
+            folderTextBox.Name = "folderTextBox";
+            folderTextBox.ReadOnly = true;
+            folderTextBox.Size = new Size(632, 20);
+            folderTextBox.TabIndex = 1;
+            folderTextBox.WordWrap = false;
+            // 
             // uiUpdateTimer
             // 
             uiUpdateTimer.Enabled = true;
@@ -358,7 +383,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(908, 482);
+            ClientSize = new Size(902, 482);
             Controls.Add(mainSplitContainer);
             Controls.Add(mainStatusStrip);
             Controls.Add(mainToolStrip);
@@ -380,6 +405,8 @@
             mainSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)mainSplitContainer).EndInit();
             mainSplitContainer.ResumeLayout(false);
+            folderPanel.ResumeLayout(false);
+            folderPanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -419,5 +446,7 @@
         private ToolStripSeparator toolStripSeparator4;
         private ToolStripButton deleteToolStripButton;
         private System.Windows.Forms.Timer uiUpdateTimer;
+        private TextBox folderTextBox;
+        private Panel folderPanel;
     }
 }

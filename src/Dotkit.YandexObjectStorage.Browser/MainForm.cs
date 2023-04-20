@@ -22,7 +22,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
             _service = Program.S3Configuration.CreateService();
             _bucketTreeViewController = new BucketTreeViewController(_service, mainTreeView, this);
-            _objectListViewController = new ObjectListViewController(_service, mainListView, this);
+            _objectListViewController = new ObjectListViewController(_service, mainListView, this, folderTextBox);
             _bucketTreeViewController.Attach(_objectListViewController);
             _objectListViewController.Attach(_bucketTreeViewController);
 

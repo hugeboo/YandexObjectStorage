@@ -103,6 +103,16 @@ namespace Dotkit.YandexObjectStorage.Browser.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icons8_папка_24 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-папка-24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap pasteToolStripButton_Image {
             get {
                 object obj = ResourceManager.GetObject("pasteToolStripButton.Image", resourceCulture);
