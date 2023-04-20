@@ -89,6 +89,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "CreateFolderForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Create Directory";
             ResumeLayout(false);

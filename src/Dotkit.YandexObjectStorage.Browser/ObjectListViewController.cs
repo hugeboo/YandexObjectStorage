@@ -422,7 +422,7 @@ namespace Dotkit.YandexObjectStorage.Browser
         {
             if (_currentFolder == null) return;
 
-            ShowProgressForm("Uploading file...");
+            ShowProgressForm("Uploading files...");
             try
             {
                 Utils.DoBackground(

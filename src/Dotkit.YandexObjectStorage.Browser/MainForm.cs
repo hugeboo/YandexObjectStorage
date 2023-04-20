@@ -27,15 +27,21 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void objectListViewController_SelectedChanged(object? sender, ItemsEventArgs e)
         {
-            if (e.Items.Length != 1)
+            if (e.Items.Length == 0)
             {
                 toolStripStatusLabel1.Text = string.Empty;
+                toolStripStatusLabel1.ToolTipText = string.Empty;
                 toolStripStatusLabel2.Text = string.Empty;
                 toolStripStatusLabel3.Text = string.Empty;
             }
-            else
+            else if (e.Items.Length == 1)
             {
                 toolStripStatusLabel3.Text = e.Items[0].LastModifiedTime.ToString(" HH:mm:ss dd.MM.yyyy");
+                toolStripStatusLabel1.ToolTipText = e.Items[0].FullName;
+
+                // Это какой-то глюк: текст последнего итема не отображается
+                toolStripStatusLabel4.Text = " ";
+
                 if (e.Items[0].Type == FileSystemType.Directory)
                 {
                     toolStripStatusLabel1.Text = $"Directory: {e.Items[0].Name}";
@@ -46,6 +52,13 @@ namespace Dotkit.YandexObjectStorage.Browser
                     toolStripStatusLabel1.Text = $"File: {fi.Name}";
                     toolStripStatusLabel2.Text = FileSizeFormatter.FormatSize(fi.Length);
                 }
+            }
+            else
+            {
+                toolStripStatusLabel1.Text = $"{e.Items.Length} item(s) selected";
+                toolStripStatusLabel1.ToolTipText = string.Empty;
+                toolStripStatusLabel2.Text = string.Empty;
+                toolStripStatusLabel3.Text = string.Empty;
             }
         }
 

@@ -94,7 +94,7 @@
             MinimizeBox = false;
             Name = "PasswordForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "S3 Storage Browser Login";
+            Text = "S3 Storage Browser";
             ResumeLayout(false);
             PerformLayout();
         }

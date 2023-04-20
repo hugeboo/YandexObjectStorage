@@ -253,6 +253,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "SettingsForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "S3 Storage Browser Settings";
             tabControl1.ResumeLayout(false);

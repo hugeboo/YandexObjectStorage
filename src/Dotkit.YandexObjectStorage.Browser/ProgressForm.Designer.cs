@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProgressForm));
             progressBar1 = new ProgressBar();
             label1 = new Label();
             SuspendLayout();
@@ -55,13 +56,16 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(589, 88);
-            ControlBox = false;
             Controls.Add(label1);
             Controls.Add(progressBar1);
             FormBorderStyle = FormBorderStyle.FixedDialog;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "ProgressForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Progress";
+            Text = "Operation In Progress";
             FormClosing += ProgressForm_FormClosing;
             ResumeLayout(false);
             PerformLayout();

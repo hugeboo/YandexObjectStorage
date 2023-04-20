@@ -129,6 +129,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "DeleteItemsForm";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Delete Items";
             FormClosing += DeleteItemsForm_FormClosing;

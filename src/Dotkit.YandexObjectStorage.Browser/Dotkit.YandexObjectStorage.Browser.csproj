@@ -11,8 +11,8 @@
     <Company>dotkit.ru</Company>
     <Copyright>Copyright © 2023 by Sergey Slepov</Copyright>
     <Description>GUI application for navigating the S3 Storage</Description>
-    <FileVersion>0.1.1</FileVersion>
-    <Version>0.1.1</Version>
+    <FileVersion>0.1.2</FileVersion>
+    <Version>0.1.2</Version>
     <Product>S3 Storage Browser</Product>
     <Title>S3 Storage Browser</Title>
   </PropertyGroup>
@@ -21,7 +21,7 @@
 
   <PropertyGroup>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <AssemblyVersion>0.1.1</AssemblyVersion>
+    <AssemblyVersion>0.1.2</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dotkit.S3" Version="0.1.5" />
+    <PackageReference Include="Dotkit.S3" Version="0.1.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 

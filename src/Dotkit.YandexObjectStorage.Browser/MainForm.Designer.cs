@@ -57,6 +57,7 @@
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
             toolStripStatusLabel3 = new ToolStripStatusLabel();
+            toolStripStatusLabel4 = new ToolStripStatusLabel();
             mainSplitContainer = new SplitContainer();
             mainTreeView = new TreeView();
             treeImageList = new ImageList(components);
@@ -256,30 +257,36 @@
             // mainStatusStrip
             // 
             mainStatusStrip.ImageScalingSize = new Size(20, 20);
-            mainStatusStrip.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2, toolStripStatusLabel3 });
-            mainStatusStrip.Location = new Point(0, 460);
+            mainStatusStrip.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2, toolStripStatusLabel3, toolStripStatusLabel4 });
+            mainStatusStrip.Location = new Point(0, 458);
             mainStatusStrip.Name = "mainStatusStrip";
             mainStatusStrip.Padding = new Padding(1, 0, 12, 0);
-            mainStatusStrip.Size = new Size(902, 22);
+            mainStatusStrip.ShowItemToolTips = true;
+            mainStatusStrip.Size = new Size(902, 24);
             mainStatusStrip.TabIndex = 2;
             mainStatusStrip.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new Size(889, 16);
+            toolStripStatusLabel1.Size = new Size(850, 18);
             toolStripStatusLabel1.Spring = true;
             toolStripStatusLabel1.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // toolStripStatusLabel2
             // 
             toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            toolStripStatusLabel2.Size = new Size(0, 16);
+            toolStripStatusLabel2.Size = new Size(0, 18);
             // 
             // toolStripStatusLabel3
             // 
             toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            toolStripStatusLabel3.Size = new Size(0, 16);
+            toolStripStatusLabel3.Size = new Size(0, 18);
+            // 
+            // toolStripStatusLabel4
+            // 
+            toolStripStatusLabel4.Name = "toolStripStatusLabel4";
+            toolStripStatusLabel4.Size = new Size(0, 18);
             // 
             // mainSplitContainer
             // 
@@ -296,7 +303,7 @@
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
             mainSplitContainer.Panel2.Controls.Add(folderPanel);
-            mainSplitContainer.Size = new Size(902, 405);
+            mainSplitContainer.Size = new Size(902, 403);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
             // 
@@ -310,7 +317,7 @@
             mainTreeView.Location = new Point(0, 0);
             mainTreeView.Name = "mainTreeView";
             mainTreeView.SelectedImageIndex = 0;
-            mainTreeView.Size = new Size(249, 405);
+            mainTreeView.Size = new Size(249, 403);
             mainTreeView.TabIndex = 0;
             // 
             // treeImageList
@@ -331,7 +338,7 @@
             mainListView.Location = new Point(0, 30);
             mainListView.Name = "mainListView";
             mainListView.ShowItemToolTips = true;
-            mainListView.Size = new Size(649, 375);
+            mainListView.Size = new Size(649, 373);
             mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
@@ -448,5 +455,6 @@
         private System.Windows.Forms.Timer uiUpdateTimer;
         private TextBox folderTextBox;
         private Panel folderPanel;
+        private ToolStripStatusLabel toolStripStatusLabel4;
     }
 }
