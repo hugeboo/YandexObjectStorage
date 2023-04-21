@@ -164,13 +164,13 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private ListViewItem CreateItem(IS3FileSystemInfo s3Item)
         {
-            string imgKey = s3Item.Type == FileSystemType.Directory ? "folder" : EnsureFileImageKey(s3Item);
+            string imgKey = s3Item.Type == FileSystemType.Directory ? "folder" : EnsureFileImageKey((S3FileInfo)s3Item);
             var item = new ListViewItem(s3Item.Name, imgKey);
             item.Tag = s3Item;
             return item;
         }
 
-        private string EnsureFileImageKey(IS3FileSystemInfo s3Item)
+        private string EnsureFileImageKey(S3FileInfo fi)
         {
             //var imageList = _listView.LargeImageList;
             //if (imageList.Images.ContainsKey(s3Item.Extension))
@@ -179,7 +179,7 @@ namespace Dotkit.YandexObjectStorage.Browser
             //}
             //else
             //{
-                
+
             //    var icon = Icon.ExtractAssociatedIcon(s3Item.Name);
             //    if (icon != null)
             //    {
@@ -187,6 +187,12 @@ namespace Dotkit.YandexObjectStorage.Browser
             //        return s3Item.Extension;
             //    }
             //}
+
+            if (IsFileDownloaded(fi))
+            {
+                return "file_default_downloaded";
+            }
+
             return "file_default";
         }
 
@@ -293,7 +299,7 @@ namespace Dotkit.YandexObjectStorage.Browser
 
         private void downloadToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            DownloadSelectedFiles(null);
+            DownloadSelectedFiles(null, true);
         }
 
         private void copyToolStripMenuItem_Click(object? sender, EventArgs e)
@@ -321,10 +327,18 @@ namespace Dotkit.YandexObjectStorage.Browser
                     sc.AddRange(files.ToArray());
                     Clipboard.SetFileDropList(sc);
                 }
-            });
+            }, false);
         }
 
-        private void DownloadSelectedFiles(Action<List<string>>? actionWithDownloadedFiles)
+        private bool IsFileDownloaded(S3FileInfo fi)
+        {
+            var etagFile = $"{MakeLocalStorageFilePath(fi, false)}.etag";
+            return fi.ETag != null && 
+                File.Exists(etagFile) && 
+                File.ReadAllText(etagFile) == fi.ETag;
+        }
+
+        private void DownloadSelectedFiles(Action<List<string>>? actionWithDownloadedFiles, bool updateExisting)
         {
             var selected = GetSelectedItems().Cast<S3FileInfo>().Where(it => it != null).ToList();
             if (!selected.Any()) return;
@@ -344,9 +358,6 @@ namespace Dotkit.YandexObjectStorage.Browser
                 }
             }
 
-            var root = Path.Combine(Program.Configuration.LocalFileStorageRoot, Program.S3Configuration.BucketName);
-            if (!Directory.Exists(root)) Directory.CreateDirectory(root);
-
             ShowProgressForm("Downloading files...");
             try
             {
@@ -354,23 +365,33 @@ namespace Dotkit.YandexObjectStorage.Browser
                     () =>
                     {
                         var lstFiles = new List<string>();
+                        bool needUpdate = false;
                         foreach (var fi in selected)
                         {
-                            var dir = Path.Combine(root, fi.Directory.Key);
-                            var localFilePath = Path.Combine(dir, fi.Name);
-                            fi.DownloadAsync(localFilePath).ConfigureAwait(false).GetAwaiter().GetResult();
-                            lstFiles.Add(localFilePath);
+                            var localFilePath = MakeLocalStorageFilePath(fi, true);
+                            bool ok = true;
+                            if (updateExisting || !IsFileDownloaded(fi))
+                            {
+                                needUpdate = true;
+                                ok = fi.DownloadAsync(localFilePath, true).ConfigureAwait(false).GetAwaiter().GetResult();
+                            }
+                            if (ok)
+                            {
+                                lstFiles.Add(localFilePath);
+                            }
                         }
-                        return lstFiles;
+                        return (lstFiles, needUpdate);
                     },
-                    (lstFiles) =>
+                    (result) =>
                     {
                         HideProgressForm();
-                        actionWithDownloadedFiles?.Invoke(lstFiles);
+                        if (result.needUpdate) UpdateItems();
+                        actionWithDownloadedFiles?.Invoke(result.lstFiles);
                     },
                     (ex) =>
                     {
                         HideProgressForm();
+                        UpdateItems();
                         ShowMessageBox(ex);
                     });
             }
@@ -379,6 +400,15 @@ namespace Dotkit.YandexObjectStorage.Browser
                 HideProgressForm();
                 ShowMessageBox(ex);
             }
+        }
+
+        private string MakeLocalStorageFilePath(S3FileInfo fi, bool createRootIfNotExists)
+        {
+            var root = Path.Combine(Program.Configuration.LocalFileStorageRoot, Program.S3Configuration.BucketName);
+            if (!Directory.Exists(root) && createRootIfNotExists) Directory.CreateDirectory(root);
+            var dir = Path.Combine(root, fi.Directory.Key);
+            var localFilePath = Path.Combine(dir, fi.Name);
+            return localFilePath;
         }
 
         private void ShowProgressForm(string message)

@@ -258,35 +258,35 @@
             // 
             mainStatusStrip.ImageScalingSize = new Size(20, 20);
             mainStatusStrip.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2, toolStripStatusLabel3, toolStripStatusLabel4 });
-            mainStatusStrip.Location = new Point(0, 458);
+            mainStatusStrip.Location = new Point(0, 460);
             mainStatusStrip.Name = "mainStatusStrip";
             mainStatusStrip.Padding = new Padding(1, 0, 12, 0);
             mainStatusStrip.ShowItemToolTips = true;
-            mainStatusStrip.Size = new Size(902, 24);
+            mainStatusStrip.Size = new Size(902, 22);
             mainStatusStrip.TabIndex = 2;
             mainStatusStrip.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new Size(850, 18);
+            toolStripStatusLabel1.Size = new Size(889, 16);
             toolStripStatusLabel1.Spring = true;
             toolStripStatusLabel1.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // toolStripStatusLabel2
             // 
             toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            toolStripStatusLabel2.Size = new Size(0, 18);
+            toolStripStatusLabel2.Size = new Size(0, 16);
             // 
             // toolStripStatusLabel3
             // 
             toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            toolStripStatusLabel3.Size = new Size(0, 18);
+            toolStripStatusLabel3.Size = new Size(0, 16);
             // 
             // toolStripStatusLabel4
             // 
             toolStripStatusLabel4.Name = "toolStripStatusLabel4";
-            toolStripStatusLabel4.Size = new Size(0, 18);
+            toolStripStatusLabel4.Size = new Size(0, 16);
             // 
             // mainSplitContainer
             // 
@@ -303,7 +303,7 @@
             // 
             mainSplitContainer.Panel2.Controls.Add(mainListView);
             mainSplitContainer.Panel2.Controls.Add(folderPanel);
-            mainSplitContainer.Size = new Size(902, 403);
+            mainSplitContainer.Size = new Size(902, 405);
             mainSplitContainer.SplitterDistance = 249;
             mainSplitContainer.TabIndex = 3;
             // 
@@ -317,7 +317,7 @@
             mainTreeView.Location = new Point(0, 0);
             mainTreeView.Name = "mainTreeView";
             mainTreeView.SelectedImageIndex = 0;
-            mainTreeView.Size = new Size(249, 403);
+            mainTreeView.Size = new Size(249, 405);
             mainTreeView.TabIndex = 0;
             // 
             // treeImageList
@@ -338,7 +338,7 @@
             mainListView.Location = new Point(0, 30);
             mainListView.Name = "mainListView";
             mainListView.ShowItemToolTips = true;
-            mainListView.Size = new Size(649, 373);
+            mainListView.Size = new Size(649, 375);
             mainListView.SmallImageList = listSmallImageList;
             mainListView.TabIndex = 0;
             mainListView.UseCompatibleStateImageBehavior = false;
@@ -350,14 +350,16 @@
             listLargeImageList.TransparentColor = Color.Transparent;
             listLargeImageList.Images.SetKeyName(0, "folder");
             listLargeImageList.Images.SetKeyName(1, "file_default");
+            listLargeImageList.Images.SetKeyName(2, "file_default_downloaded");
             // 
             // listSmallImageList
             // 
             listSmallImageList.ColorDepth = ColorDepth.Depth8Bit;
             listSmallImageList.ImageStream = (ImageListStreamer)resources.GetObject("listSmallImageList.ImageStream");
             listSmallImageList.TransparentColor = Color.Transparent;
-            listSmallImageList.Images.SetKeyName(0, "file_default");
-            listSmallImageList.Images.SetKeyName(1, "folder");
+            listSmallImageList.Images.SetKeyName(0, "folder");
+            listSmallImageList.Images.SetKeyName(1, "file_default");
+            listSmallImageList.Images.SetKeyName(2, "file_default_downloaded");
             // 
             // folderPanel
             // 
